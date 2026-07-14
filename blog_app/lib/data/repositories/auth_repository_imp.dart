@@ -1,7 +1,9 @@
 import 'package:blog_app/data/datasources/auth_remote_data_sources.dart';
+import 'package:blog_app/core/common/entites/user.dart';
 import 'package:blog_app/error/exception.dart';
 import 'package:blog_app/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../../repository/auth_repository.dart';
 
 /// AuthRepoImp calls the SignUp & Login from auth_remote_ds.dart file
@@ -11,30 +13,66 @@ class AuthRepositoryImp  implements AuthRepository {
   AuthRepositoryImp(this.remoteDataSource);
 
   @override
+  Future<Either<Failure, User>> loginWithEmailPassword({
+    required String email,
+    required String password
+  }) async {
+      return _getUser(() async =>  await remoteDataSource.loginWithEmailPassword(
+          email: email,
+          password: password
+        ),
+      );
+    }
 
-  Future<Either<Failure, String>> loginWithEmailPassword({required String email, required String password}) {
-    throw UnimplementedError();
-  }
 
   @override
-  Future<Either<Failure, String>> signUpWithEmailPassword({
+  Future<Either<Failure, User>> signUpWithEmailPassword({
     required String name,
     required String email,
     required String password
   }) async {
-    try{
-      final userId  = await remoteDataSource.signUpWithEmailPassword(
+      return _getUser(() async => await remoteDataSource.signUpWithEmailPassword(
           name: name,
           email: email,
-          password: password);
+          password: password),
+      );
+  }
 
-      return right(userId);
-      /// Wrote an try-catch excep coz AuthRemoteDS going to throw an ServerExcep so to catch it
-    } on ServerException catch (e){
-      return left(Failure(e.message));
+  @override
+  Future<Either<Failure, User>> CurrentUser() async {
+    try{
+      final user = await remoteDataSource.getCurrentUserData();
+      if(user == null){
+        return left(Failure('User not logged in'));
+      }
+      return right(user);
+    }
+    on ServerException catch (e){
+      return left(Failure((e.message)));
     }
 
   }
 
 
-}
+  /// More cleaner way
+  Future<Either<Failure,User>> _getUser(
+      Future<User> Function() fn,
+      ) async{
+        try{
+          final user  = await fn();
+          return right(user);
+          /// Wrote an try-catch excep coz AuthRemoteDS going to throw an ServerExcep so to catch it
+
+          /// wrote as sb.AuthException coz its coming from supa base lib. sb exposes the user class as well as we created one i.e User.
+          /// imported the prefixes as  sb..
+        } on sb.AuthException catch (e){
+          return left(Failure(e.message));
+        }
+
+          on ServerException catch (e){
+          return left(Failure(e.message));
+        }
+      }
+
+
+  }

@@ -1,7 +1,9 @@
+import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
 import 'package:blog_app/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../core/common/Widgets/loader.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_field.dart';
 import 'login_page.dart';
@@ -48,73 +50,87 @@ class _SignUpPageState extends State<SignUpPage> {
         /// added the padding so spaces are left form L & R Side
       body: Padding(
         padding: const EdgeInsets.all(10.0),
-        child: Form(
-          key: formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Sign Up ',
-                style: TextStyle(
-                    fontSize: 50,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 15),
-          
-              AuthField(hintText: 'Name',controller: nameController),
-              const SizedBox(height: 15),
-          
-               AuthField(hintText: 'Email', controller: emailController),
-              const SizedBox(height: 15),
-          
-              AuthField(hintText: 'Password', controller: passwordController, isObsecureText: true),
-
-              /// Sign Up Button
-              const SizedBox(height: 15),
-              AuthButton(buttonText: 'Sign Up',
-              onPressed: () {
-                print('DEBUG: Sign Up button pressed');
-                /// validating the data..
-                if(formKey.currentState!.validate()){
-                  print('DEBUG: form valid, dispatching event');
-                  ///calling auth sign up event on auth bloc
-                  context.read<AuthBloc>().add(
-                      AuthSignUp(
-                          email: emailController.text.trim(),
-                          name: nameController.text.trim(),
-                          password: passwordController.text.trim(),
+        child: BlocConsumer<AuthBloc, AuthState>(
+          listener: (context, state) {
+            /// If its fail to  verify it shows an bottom snack bar
+            if(state is AuthFailure){
+              showSnackBar(context, state.message);
+            }
+          },
+          /// check if the state is loading then show the loader else show the form
+          builder: (context, state) {
+            if(state is AuthLoading){
+              return const Loader();
+            }
+            return Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Sign Up ',
+                        style: TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.bold),
                       ),
-                  );
-                } else {
-                  print('DEBUG: form INVALID');
-                }
-              },
-              ),
-          
-              const SizedBox(height: 15),
-          
-          
-              /// Rich text allow to user to write 2 different text on same line
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    LoginPage.route(),
-                  );
-                },
-                child: RichText(text: TextSpan(text: "Already have an account ? ",
-                    /// define by Flutter by default
-                style: Theme.of(context).textTheme.titleMedium,
-                children: [
-                  TextSpan(text: 'Sign In',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppPalette.gradient2,
-                      fontWeight: FontWeight.bold
-                    ))]
-                ),
-                ),
-              ),
-            ],
-          ),
+                      const SizedBox(height: 15),
+                  
+                      AuthField(hintText: 'Name',controller: nameController),
+                      const SizedBox(height: 15),
+                  
+                       AuthField(hintText: 'Email', controller: emailController),
+                      const SizedBox(height: 15),
+                  
+                      AuthField(hintText: 'Password', controller: passwordController, isObsecureText: true),
+        
+                      /// Sign Up Button
+                      const SizedBox(height: 15),
+                      AuthButton(buttonText: 'Sign Up',
+                      onPressed: () {
+                        print('DEBUG: Sign Up button pressed');
+                        /// validating the data..
+                        if(formKey.currentState!.validate()){
+                          print('DEBUG: form valid, dispatching event');
+                          ///calling auth sign up event on auth bloc
+                          context.read<AuthBloc>().add(
+                              AuthSignUp(
+                                  email: emailController.text.trim(),
+                                  name: nameController.text.trim(),
+                                  password: passwordController.text.trim(),
+                              ),
+                          );
+                        } else {
+                          print('DEBUG: form INVALID');
+                        }
+                      },
+                      ),
+                  
+                      const SizedBox(height: 15),
+                  
+                  
+                      /// Rich text allow to user to write 2 different text on same line
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            LoginPage.route(),
+                          );
+                        },
+                        child: RichText(text: TextSpan(text: "Already have an account ? ",
+                            /// define by Flutter by default
+                        style: Theme.of(context).textTheme.titleMedium,
+                        children: [
+                          TextSpan(text: 'Sign In',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: AppPalette.gradient2,
+                              fontWeight: FontWeight.bold
+                            ))]
+                        ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+          },
         ),
       ),
     );

@@ -1,6 +1,12 @@
+import 'package:blog_app/core/usecase/usecase.dart';
+import 'package:blog_app/domain/usecases/current_user.dart';
+import 'package:blog_app/domain/usecases/user_sign_in.dart';
 import 'package:blog_app/domain/usecases/user_sign_up.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../core/common/cubits/app_user/app_user_cubit.dart';
+import '../../core/common/entites/user.dart';
 part 'auth_event.dart';
 part 'auth_state.dart';
 
@@ -8,30 +14,85 @@ part 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// created an private var
   final UserSignUp _userSignUp;
+  final UserLogin _userLogin;
+  final CurrentUser _currentUser;
+  final AppUserCubit _appUserCubit;
+
   AuthBloc({
     required UserSignUp userSignUp,
-  }) : _userSignUp = userSignUp, super(AuthInitial()) {
-     on<AuthSignUp>((event, emit) async {
-       print('DEBUG: AuthSignUp event received: ${event.email}');
-       /// auth sign up event recieve then call the usecase
-       final res = await _userSignUp(
-         UserSignUpParams(
-           email: event.email,
-           password: event.password,
-           name: event.name,
-         ),
-       );
-       print('DEBUG: signup result: $res');
-       res.fold(
-         (l) {
-           print('DEBUG: signup FAILED: ${l.message}');
-           emit(AuthFailure(l.message));
-         },
-         (r) {
-           print('DEBUG: signup SUCCESS uid=$r');
-           emit(AuthSuccess(r));
-         },
-       );
-     });
-  }
+    required UserLogin userLogin,
+    required CurrentUser currentUser,
+    required AppUserCubit appUserCubit,
+  }) : _userSignUp = userSignUp,
+        _userLogin = userLogin,
+        _currentUser =  currentUser,
+        _appUserCubit = appUserCubit,
+        super(AuthInitial()) {
+          on<AuthEvent>((_, emit) => emit(AuthLoading()));
+        on<AuthSignUp>(_onAuthSignUp);
+        on<AuthLogin>(_onAuthLogin);
+        on<AuthIsUserLoggedIn>(_isUserLoggedIn);
+
+      }
+
+      /// UserLoggedIn event is called when the app is opened and check if the user is already logged in or not
+      void _isUserLoggedIn(
+          AuthIsUserLoggedIn event,
+          Emitter<AuthState> emit
+          ) async{
+        /// calling current user class
+        final res = await  _currentUser(NoParams());
+        res.fold((l) => emit(AuthFailure(l.message)),
+              (r) => _emitAuthSuccess(r, emit),
+
+        );
+      }
+    
+    void _onAuthSignUp(AuthSignUp event, Emitter<AuthState> emit) async {
+      print('DEBUG: AuthSignUp event received: ${event.email}');
+
+      /// auth sign up event recieve then call the usecase
+      final res = await _userSignUp(
+        UserSignUpParams(
+          email: event.email,
+          password: event.password,
+          name: event.name,
+        ),
+      );
+      print('DEBUG: signup result: $res');
+      res.fold(
+        (failure) {
+          print('DEBUG: signup FAILED: ${failure.message}');
+          emit(AuthFailure(failure.message));
+        },
+        (user) {
+          print('DEBUG: signup SUCCESS uid=$user');
+          _emitAuthSuccess(user, emit);
+        },
+      );
+    }
+
+
+    void _onAuthLogin(AuthLogin event, Emitter<AuthState> emit) async {
+      print('DEBUG: AuthLogin event received: ${event.email}');
+
+      /// auth login event recieve then call the usecase
+      final res = await _userLogin(UserLoginParams(
+        email: event.email,
+        password: event.password
+      ),);
+      res.fold(
+        (l) {
+          print('DEBUG: login FAILED: ${l.message}');
+          emit(AuthFailure(l.message));
+        },
+        (r) => _emitAuthSuccess(r, emit),
+      );
+    }
+
+    void _emitAuthSuccess(User user, Emitter<AuthState> emit)
+    {
+      _appUserCubit.updateUser(user);
+      emit(AuthSuccess(user));
+    }
 }
