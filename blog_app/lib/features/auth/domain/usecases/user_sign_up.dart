@@ -1,8 +1,9 @@
-import 'package:blog_app/core/usecase/usecase.dart';
 import 'package:blog_app/error/failures.dart';
 import 'package:blog_app/repository/auth_repository.dart';
 import 'package:fpdart/fpdart.dart';
-import '../../core/common/entites/user.dart';
+
+import '../../../../core/common/entites/user.dart';
+import '../../../../core/usecase/usecase.dart';
 
 /// need to uses an default para coz it was taking an dynamic one
 class UserSignUp implements UseCase<User,UserSignUpParams> {

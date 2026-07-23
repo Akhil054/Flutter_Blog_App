@@ -1,10 +1,11 @@
-import 'package:blog_app/data/datasources/auth_remote_data_sources.dart';
 import 'package:blog_app/core/common/entites/user.dart';
 import 'package:blog_app/error/exception.dart';
 import 'package:blog_app/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb;
-import '../../repository/auth_repository.dart';
+
+import '../../../../repository/auth_repository.dart';
+import '../datasources/auth_remote_data_sources.dart';
 
 /// AuthRepoImp calls the SignUp & Login from auth_remote_ds.dart file
 class AuthRepositoryImp  implements AuthRepository {

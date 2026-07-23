@@ -1,10 +1,11 @@
-import 'package:blog_app/presentation/pages/signup_page.dart';
+import 'package:blog_app/features/auth/presentation/pages/signup_page.dart';
 import 'package:blog_app/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/common/Widgets/loader.dart';
-import '../../core/common/Widgets/show_snakbar.dart';
+
+import '../../../../core/common/Widgets/loader.dart';
+import '../../../../core/common/Widgets/show_snakbar.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_field.dart';

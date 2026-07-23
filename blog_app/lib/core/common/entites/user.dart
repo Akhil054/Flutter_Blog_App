@@ -1,4 +1,3 @@
-import 'package:blog_app/data/model/user_model.dart';
 
 class User {
   final String id;

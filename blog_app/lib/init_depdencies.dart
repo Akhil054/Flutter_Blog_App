@@ -1,14 +1,20 @@
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
-import 'package:blog_app/domain/usecases/current_user.dart';
-import 'package:blog_app/presentation/bloc/auth_bloc.dart';
+import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.dart';
+import 'package:blog_app/features/blog/data/repository/blog_repository_impl.dart';
+import 'package:blog_app/features/blog/domain/repository/blog_repository.dart';
+import 'package:blog_app/features/blog/domain/useCases/upload_blog.dart';
+import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/repository/auth_repository.dart';
 import 'package:blog_app/secret/app_secrets.dart';
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'data/datasources/auth_remote_data_sources.dart';
-import 'data/repositories/auth_repository_imp.dart';
-import 'domain/usecases/user_sign_in.dart';
-import 'domain/usecases/user_sign_up.dart';
+
+import 'features/auth/data/datasources/auth_remote_data_sources.dart';
+import 'features/auth/data/repositories/auth_repository_imp.dart';
+import 'features/auth/domain/usecases/current_user.dart';
+import 'features/auth/domain/usecases/user_sign_in.dart';
+import 'features/auth/domain/usecases/user_sign_up.dart';
+import 'features/auth/presentation/bloc/auth_bloc.dart';
 
 final serviceLocator = GetIt.instance;
 
@@ -29,6 +35,8 @@ Future<void> initDependencies() async{
   serviceLocator.registerLazySingleton<AppUserCubit>(() => AppUserCubit());
 
   _initAuth();
+
+  _initBlog();
 
 }
 
@@ -76,9 +84,32 @@ void _initAuth() {
       appUserCubit: serviceLocator(),
     ),
   );
+}
 
-
-
-
-
+void _initBlog() {
+  //Datasources
+  serviceLocator
+    ..registerFactory<BlogRemoteDataSource>(
+      () => BlogRemoteDataSourceImpl(
+        supabaseClient: serviceLocator(),
+      ),
+    )
+    // Repository
+    ..registerFactory<BlogRepository>(
+      () => BlogRepositoryImpl(
+        serviceLocator(),
+      ),
+    )
+    // UseCases
+    ..registerFactory(
+      () => UploadBlog(
+        serviceLocator(),
+      ),
+    )
+    // Bloc
+    ..registerLazySingleton(
+      () => BlogBloc(
+        serviceLocator(),
+      ),
+    );
 }

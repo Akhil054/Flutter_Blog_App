@@ -1,4 +1,5 @@
-import '../../core/common/entites/user.dart';
+
+import '../../../../core/common/entites/user.dart';
 
 class UserModel extends User{
   ///extends the entity present in domain layer

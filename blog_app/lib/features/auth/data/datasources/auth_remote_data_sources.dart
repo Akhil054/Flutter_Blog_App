@@ -1,6 +1,7 @@
-import 'package:blog_app/data/model/user_model.dart';
 import 'package:blog_app/error/exception.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../model/user_model.dart';
 
 /// This interface belongs to Data Sources & we are only concern abt calls made to external data sources
 

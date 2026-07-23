@@ -20,11 +20,20 @@ class AppTheme{
       backgroundColor: AppPalette.backgroundColor,
     ),
     scaffoldBackgroundColor: AppPalette.backgroundColor,
+
+    chipTheme: const ChipThemeData(
+      color: MaterialStatePropertyAll(
+        AppPalette.backgroundColor,
+      ),
+      side: BorderSide.none,
+    ),
     inputDecorationTheme: InputDecorationTheme(
       /// TextField Form Deco
       contentPadding: const EdgeInsets.all(22),
+      border: _border(),
       enabledBorder: _border(),
       focusedBorder: _border(AppPalette.gradient2),
+      errorBorder: _border(AppPalette.errorColor),
     ),
 
 

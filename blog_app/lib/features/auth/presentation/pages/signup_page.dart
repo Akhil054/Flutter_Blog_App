@@ -1,9 +1,9 @@
 import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
-import 'package:blog_app/presentation/bloc/auth_bloc.dart';
 import 'package:blog_app/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../core/common/Widgets/loader.dart';
+import '../../../../core/common/Widgets/loader.dart';
+import '../bloc/auth_bloc.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_field.dart';
 import 'login_page.dart';
