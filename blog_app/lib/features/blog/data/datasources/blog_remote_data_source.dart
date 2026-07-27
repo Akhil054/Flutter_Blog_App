@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:developer' as developer;
+import 'package:blog_app/error/exception.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../blog_model.dart';
 
@@ -28,6 +29,9 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
 
       return BlogModel.fromJson(blogData.first);
     }
+      on PostgrestException catch(e){
+        throw Exception(e.message);
+      }
     catch(e){
       throw Exception(e.toString());
     }
@@ -60,7 +64,14 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
 
       /// bucket called here 
       return supabaseClient.storage.from('blogs_images').getPublicUrl(blog.id);
-    } catch (e) {
+    } 
+
+    ///Storage Exception is thrown when the image upload fails
+    on StorageException catch(e) {
+        throw ServerException(e.message);
+    }
+
+    catch (e) {
       // #region debug-point G:upload-image-error
       developer.log(
         '[DEBUG] uploadBlogImage failed blogId=${blog.id} error=$e',
@@ -69,6 +80,7 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
 
       throw Exception(e.toString());
     }
+    
   }
 
 /// Returning the blog from db to user 
@@ -79,10 +91,13 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
       /// get the data from blogs table and then go towards profiles table to get the name of the user who posted the blog
     final blogs = await supabaseClient.from('blogs').select('*, profiles(name)');
       /// mapping the data to the blog model and returning the list of blogs
-    return blogs.map((blog) => BlogModel.fromJson(blog)..copyWith(
+    return blogs.map((blog) => BlogModel.fromJson(blog).copyWith(
       posterName: blog['profiles']?['name'] as String?,
     )).toList();
    }
+    on PostgrestException catch(e){
+          throw Exception(e.message);
+    }
    catch(e){
     throw Exception(e.toString());
    }

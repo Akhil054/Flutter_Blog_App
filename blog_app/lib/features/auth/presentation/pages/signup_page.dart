@@ -1,4 +1,5 @@
 import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
+import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
 import 'package:blog_app/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -56,6 +57,12 @@ class _SignUpPageState extends State<SignUpPage> {
             if(state is AuthFailure){
               showSnackBar(context, state.message);
             }
+            // else if(state is AuthSuccess){
+            //   Navigator.pushNamedAndRemoveUntil(
+            //     context, BlogPage.route(), 
+            //     (route) => false
+            //   );
+            // }
           },
           /// check if the state is loading then show the loader else show the form
           builder: (context, state) {

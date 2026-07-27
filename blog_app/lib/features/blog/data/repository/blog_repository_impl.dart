@@ -52,6 +52,7 @@ class BlogRepositoryImpl implements BlogRepository{
       );
 
       ///saving to db
+      // ignore: non_constant_identifier_names
       final UploadBlog = await blogRemoteDataSource.uploadBlog(blogModel);
       return right(UploadBlog);
       
@@ -59,9 +60,6 @@ class BlogRepositoryImpl implements BlogRepository{
     on ServerException catch (e){
       return left(Failure(e.message));
     }
-
-
-
   }
 
 //// This function is used to get all the blogs from the database. It returns a list of Blog objects.
@@ -78,6 +76,4 @@ class BlogRepositoryImpl implements BlogRepository{
     }
  
   }
-
-  
 }

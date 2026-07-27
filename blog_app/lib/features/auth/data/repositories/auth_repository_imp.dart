@@ -4,8 +4,6 @@ import 'package:blog_app/error/exception.dart';
 import 'package:blog_app/error/failures.dart';
 import 'package:blog_app/features/auth/data/model/user_model.dart';
 import 'package:fpdart/fpdart.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as sb;
-
 import '../../../../repository/auth_repository.dart';
 import '../datasources/auth_remote_data_sources.dart';
 
@@ -22,14 +20,15 @@ class AuthRepositoryImp  implements AuthRepository {
   Future<Either<Failure, User>> loginWithEmailPassword({
     required String email,
     required String password
-  }) async {
+  }) 
+  async {
     /// returing getUser function coz its resuable
       return _getUser(() async =>  await remoteDataSource.loginWithEmailPassword(
           email: email,
           password: password
         ),
       );
-    }
+  }
 
 
   @override
@@ -38,11 +37,11 @@ class AuthRepositoryImp  implements AuthRepository {
     required String email,
     required String password
   }) async {
-      return _getUser(() async => await remoteDataSource.signUpWithEmailPassword(
-          name: name,
-          email: email,
-          password: password),
-      );
+        return _getUser(() async => await remoteDataSource.signUpWithEmailPassword(
+            name: name,
+            email: email,
+            password: password),
+        );
   }
 
   @override
@@ -78,27 +77,22 @@ class AuthRepositoryImp  implements AuthRepository {
 
   /// More cleaner way
   Future<Either<Failure,User>> _getUser(
-      Future<User> Function() fn,
-      ) async{
-        try{
-          /// Checking the internet connection before making the API call
-          if(!await (connectionChecker.isConnected)){
-            return left(Failure('No internet connection'));
-          }
-          final user  = await fn();
-          return right(user);
-          /// Wrote an try-catch excep coz AuthRemoteDS going to throw an ServerExcep so to catch it
-
-          /// wrote as sb.AuthException coz its coming from supa base lib. sb exposes the user class as well as we created one i.e User.
-          /// imported the prefixes as  sb..
-        } on sb.AuthException catch (e){
-          return left(Failure(e.message));
+    Future<User> Function() fn,
+    ) async{
+      try{
+        /// Checking the internet connection before making the API call
+        if(!await (connectionChecker.isConnected)){
+          return left(Failure('No internet connection'));
         }
+        final user  = await fn();
+        return right(user);
+        /// Wrote an try-catch excep coz AuthRemoteDS going to throw an ServerExcep so to catch it
 
-          on ServerException catch (e){
-          return left(Failure(e.message));
-        }
+        /// wrote as sb.AuthException coz its coming from supa base lib. sb exposes the user class as well as we created one i.e User.
+        /// imported the prefixes as  sb..
+      } 
+        on ServerException catch (e){
+        return left(Failure(e.message));
       }
-
-
+    }
   }

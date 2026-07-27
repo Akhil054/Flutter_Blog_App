@@ -1,4 +1,5 @@
 import 'package:blog_app/features/auth/presentation/pages/signup_page.dart';
+import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
 import 'package:blog_app/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -54,6 +55,12 @@ class _LoginPageState extends State<LoginPage> {
             /// If its fail to verify it shows an bottom snack bar
             if(state is AuthFailure){
               showSnackBar(context, state.message);
+            }
+            else if(state is AuthSuccess){
+              Navigator.pushNamedAndRemoveUntil(
+                context, BlogPage.route(), 
+                (route) => false
+              );
             }
           },
           /// check if the state is loading then show the loader else show the form
