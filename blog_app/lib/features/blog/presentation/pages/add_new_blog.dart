@@ -89,7 +89,7 @@ class _AddNewBlogState extends State<AddNewBlog> {
           if(state is BlogFailure){
             showSnackBar(context, state.error);
           }
-          else if(state is BlogSuccess){
+          else if(state is BlogUploadSuccess){
             /// creating an new route in blog page
             Navigator.pushAndRemoveUntil(
                 context,

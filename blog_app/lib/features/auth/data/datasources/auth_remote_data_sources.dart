@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../model/user_model.dart';
 
 /// This interface belongs to Data Sources & we are only concern abt calls made to external data sources
+/// supabase realted logic is implemented 
 
 abstract interface class AuthRemoteDataSources {
   Session? get currentUserSession;
@@ -24,6 +25,7 @@ abstract interface class AuthRemoteDataSources {
 }
 /// depending on datasource i.e supabase
 class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
+  
   /// Ask supabase client from  imp constructor
   final SupabaseClient supabaseClient;
 

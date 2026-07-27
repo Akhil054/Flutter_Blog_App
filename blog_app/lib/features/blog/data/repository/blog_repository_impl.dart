@@ -37,6 +37,7 @@ class BlogRepositoryImpl implements BlogRepository{
         imageUrl: '',
         topics: topics,
         updatedAt: DateTime.now(),
+        posterName: null,
       );
 
       /// access to db & call uploadImage function & saving the imageURL and possing to blog Model so its get uploaded to db
@@ -61,6 +62,21 @@ class BlogRepositoryImpl implements BlogRepository{
 
 
 
+  }
+
+//// This function is used to get all the blogs from the database. It returns a list of Blog objects.
+  @override
+  Future<Either<Failure, List<Blog>>> getAllBlogs() async {
+    try{
+      /// access to blogRepoDS & call getAll Blog func 
+      final blogs = await blogRemoteDataSource.getAllBlogs();
+      return right(blogs);
+      
+    }
+    on ServerException catch (e){
+      return left(Failure(e.message));
+    }
+ 
   }
 
   

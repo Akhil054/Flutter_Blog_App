@@ -19,3 +19,6 @@ final class BlogUpload extends BlogEvent {
   });
 
 }
+
+final class BlogFetchGetAllBlogs extends BlogEvent {}
+

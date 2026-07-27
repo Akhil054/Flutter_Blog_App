@@ -10,8 +10,8 @@ abstract interface class BlogRemoteDataSource{
     required File image,
     required BlogModel blog,
   });
-
-  
+  /// Returning the blog from db to user 
+  Future<List<BlogModel>> getAllBlogs();
 }
 
 class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
@@ -44,7 +44,7 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
         '[DEBUG] uploadBlogImage start blogId=${blog.id} path=${image.path} type=${image.runtimeType}',
         name: 'blog-upload-web',
       );
-      // #endregion
+      
       /// bucket implemented & call 
       await supabaseClient.storage.from('blogs_images').upload(
         blog.id,
@@ -57,7 +57,7 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
         '[DEBUG] uploadBlogImage success blogId=${blog.id}',
         name: 'blog-upload-web',
       );
-      // #endregion
+
       /// bucket called here 
       return supabaseClient.storage.from('blogs_images').getPublicUrl(blog.id);
     } catch (e) {
@@ -66,8 +66,26 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
         '[DEBUG] uploadBlogImage failed blogId=${blog.id} error=$e',
         name: 'blog-upload-web',
       );
-      // #endregion
+
       throw Exception(e.toString());
     }
+  }
+
+/// Returning the blog from db to user 
+  @override
+  Future<List<BlogModel>> getAllBlogs() async {
+   
+   try{
+      /// get the data from blogs table and then go towards profiles table to get the name of the user who posted the blog
+    final blogs = await supabaseClient.from('blogs').select('*, profiles(name)');
+      /// mapping the data to the blog model and returning the list of blogs
+    return blogs.map((blog) => BlogModel.fromJson(blog)..copyWith(
+      posterName: blog['profiles']?['name'] as String?,
+    )).toList();
+   }
+   catch(e){
+    throw Exception(e.toString());
+   }
+
   }
 }

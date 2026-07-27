@@ -1,12 +1,15 @@
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
+import 'package:blog_app/core/network/connection_checker.dart';
 import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.dart';
 import 'package:blog_app/features/blog/data/repository/blog_repository_impl.dart';
 import 'package:blog_app/features/blog/domain/repository/blog_repository.dart';
+import 'package:blog_app/features/blog/domain/useCases/get_all_blogs.dart';
 import 'package:blog_app/features/blog/domain/useCases/upload_blog.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/repository/auth_repository.dart';
 import 'package:blog_app/secret/app_secrets.dart';
 import 'package:get_it/get_it.dart';
+import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'features/auth/data/datasources/auth_remote_data_sources.dart';
@@ -31,8 +34,17 @@ Future<void> initDependencies() async{
   //// it will provide same instance whenever its been demanded..
   serviceLocator.registerLazySingleton(() => supabase.client);
 
+  serviceLocator.registerFactory(() => InternetConnection());
+
   // Core
   serviceLocator.registerLazySingleton<AppUserCubit>(() => AppUserCubit());
+
+  /// doing the interface & passing the impl class to it.. so that we can use the interface in the repo & use the impl class here
+  serviceLocator.registerFactory<ConnectionChecker>(
+  () => ConnectionCheckerImpl(
+    internetConnection: serviceLocator(),
+    ),
+  );
 
   _initAuth();
 
@@ -54,8 +66,10 @@ void _initAuth() {
   ..registerFactory<AuthRepository>(
       () => AuthRepositoryImp(
         serviceLocator(),    //// it automatically finds the authremoteds
+        serviceLocator(),    //// it automatically finds the connectionchecker
       ),
   )
+
 
   /// UseCases
   /// Registering the UserSignup
@@ -106,10 +120,17 @@ void _initBlog() {
         serviceLocator(),
       ),
     )
+
+    ..registerFactory(
+      () => GetAllBlogs(serviceLocator()),
+    )
+
     // Bloc
     ..registerLazySingleton(
       () => BlogBloc(
-        serviceLocator(),
+        /// named arguments are used to avoid confusion as we have multiple usecases in blogbloc
+        uploadBlog:serviceLocator(),
+        getAllBlogs: serviceLocator(),
       ),
     );
 }
