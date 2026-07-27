@@ -1,6 +1,6 @@
 import 'package:blog_app/features/auth/presentation/pages/signup_page.dart';
 import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
-import 'package:blog_app/theme/pallete.dart';
+import 'package:blog_app/core/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

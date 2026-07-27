@@ -1,7 +1,7 @@
 import 'package:blog_app/core/utils/calculate_read_time.dart';
 import 'package:blog_app/core/utils/format_date.dart';
 import 'package:blog_app/features/blog/domain/entites/blog.dart';
-import 'package:blog_app/theme/pallete.dart';
+import 'package:blog_app/core/theme/pallete.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 

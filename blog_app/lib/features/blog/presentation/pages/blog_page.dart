@@ -2,7 +2,7 @@ import 'package:blog_app/core/common/Widgets/loader.dart';
 import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/features/blog/presentation/widgets/blog_Card.dart';
-import 'package:blog_app/theme/pallete.dart';
+import 'package:blog_app/core/theme/pallete.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

@@ -1,6 +1,6 @@
 import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
 import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
-import 'package:blog_app/theme/pallete.dart';
+import 'package:blog_app/core/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/common/Widgets/loader.dart';

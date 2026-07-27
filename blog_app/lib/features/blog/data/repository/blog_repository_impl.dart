@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:blog_app/core/constants/constant.dart';
+import 'package:blog_app/core/network/connection_checker.dart';
 import 'package:blog_app/error/exception.dart';
 import 'package:blog_app/error/failures.dart';
 import 'package:blog_app/features/blog/data/blog_model.dart';
@@ -16,7 +18,8 @@ class BlogRepositoryImpl implements BlogRepository{
 
   /// contact db for uploaded and access of image
   final BlogRemoteDataSource blogRemoteDataSource;
-  BlogRepositoryImpl(this.blogRemoteDataSource);
+  final ConnectionChecker connectionChecker;
+  BlogRepositoryImpl(this.blogRemoteDataSource, this.connectionChecker);
 
   @override
   Future<Either<Failure, Blog>> uploadBlog({
@@ -27,6 +30,9 @@ class BlogRepositoryImpl implements BlogRepository{
     required List<String> topics,
   })  async {
     try{
+      if(!await (connectionChecker.isConnected)){
+        return left(Failure(Constants.noConnErrorMsg));
+      }
       /// created an blog model based on above one..
       /// uuid package is been taken for gen of random id
       BlogModel blogModel = BlogModel(

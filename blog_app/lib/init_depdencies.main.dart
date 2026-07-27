@@ -95,6 +95,7 @@ void _initBlog() {
     ..registerFactory<BlogRepository>(
       () => BlogRepositoryImpl(
         serviceLocator(),
+        serviceLocator(),
       ),
     )
     // UseCases
