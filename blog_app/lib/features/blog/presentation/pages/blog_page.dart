@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/common/Widgets/loader.dart';
 import '../../../../core/common/Widgets/show_snakbar.dart';
+import '../../../../core/common/cubits/theme/theme_cubit.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../bloc/blog_bloc.dart';
 import '../widgets/blog_card.dart';
@@ -33,14 +34,24 @@ class _BlogPageState extends State<BlogPage> {
       appBar:AppBar(
         title: const Text('Blog App'),
         actions:[
-          IconButton(onPressed:() {
-            Navigator.push(context, AddNewBlog.route());
-          }, icon:const Icon(CupertinoIcons.add_circled,)
+          IconButton(
+            onPressed:() {
+              Navigator.push(context, AddNewBlog.route());
+            },
+            icon: const Icon(CupertinoIcons.add_circled),
           ),
-
-          IconButton(onPressed:(){
-            Navigator.push(context, LoginPage.route());
-          },
+          IconButton(
+            icon: Icon(
+              context.watch<ThemeCubit>().state == ThemeMode.dark
+                  ? Icons.light_mode
+                  : Icons.dark_mode,
+            ),
+            onPressed: () => context.read<ThemeCubit>().toggleTheme(),
+          ),
+          IconButton(
+            onPressed:(){
+              Navigator.push(context, LoginPage.route());
+            },
             icon: const Icon(Icons.logout_outlined),
           ),
         ],

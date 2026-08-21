@@ -38,4 +38,29 @@ class AppTheme{
 
 
   );
+
+  static final lightThemeMode = ThemeData.light().copyWith(
+
+    appBarTheme: const AppBarTheme(
+      backgroundColor: AppPalette.lightBackgroundColor,
+      foregroundColor: AppPalette.blackColor,
+    ),
+    scaffoldBackgroundColor: AppPalette.lightBackgroundColor,
+
+    chipTheme: const ChipThemeData(
+      color: MaterialStatePropertyAll(
+        AppPalette.lightBackgroundColor,
+      ),
+      side: BorderSide.none,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      /// TextField Form Deco
+      contentPadding: const EdgeInsets.all(22),
+      border: _border(AppPalette.lightBorderColor),
+      enabledBorder: _border(AppPalette.lightBorderColor),
+      focusedBorder: _border(AppPalette.gradient2),
+      errorBorder: _border(AppPalette.errorColor),
+    ),
+
+  );
 }

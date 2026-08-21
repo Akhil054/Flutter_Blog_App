@@ -1,4 +1,5 @@
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
+import 'package:blog_app/core/common/cubits/theme/theme_cubit.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/init_depdencies.dart';
 import 'package:blog_app/theme/theme.dart';
@@ -27,7 +28,10 @@ void main() async {
       BlocProvider(
         create: (_) => serviceLocator<BlogBloc>(),
       ),
-    ], 
+      BlocProvider(
+        create: (_) => ThemeCubit(),
+      ),
+    ],
     child: const MyApp(),
     
   ));
@@ -51,23 +55,28 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Blog App',
-      theme: AppTheme.darkThemeMode,
-      home: BlocSelector<AppUserCubit, AppUserState, bool>(
-        selector: (state) {
-          return state is AppUserLoggedIn;
-        },
-        builder: (context, isLoggedIn) {
-          if (isLoggedIn) {
-            return const BlogPage();
-          }
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, themeMode) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Blog App',
+          theme: AppTheme.lightThemeMode,
+          darkTheme: AppTheme.darkThemeMode,
+          themeMode: themeMode,
+          home: BlocSelector<AppUserCubit, AppUserState, bool>(
+            selector: (state) {
+              return state is AppUserLoggedIn;
+            },
+            builder: (context, isLoggedIn) {
+              if (isLoggedIn) {
+                return const BlogPage();
+              }
 
-          return const LoginPage();
-        },
-      ),
-      // home: BlogPage(),
+              return const LoginPage();
+            },
+          ),
+        );
+      },
     );
   }
 }
