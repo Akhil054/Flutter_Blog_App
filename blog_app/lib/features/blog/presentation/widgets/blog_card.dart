@@ -41,7 +41,9 @@ class BlogCard extends StatelessWidget {
                         const SizedBox(height: 180),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
@@ -56,16 +58,21 @@ class BlogCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
 
-                // const Align(
-                //   alignment: Alignment.bottomLeft,
-                //   child: Text(
-                //     'Tap for More',
-                //     style: TextStyle(
-                //       fontSize: 14,
-                //       color: AppPalette.whiteColor,
-                //     ),
-                //   ),
-                // ),
+                // Display the author name
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'by ${blog.author}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontStyle: FontStyle.italic,
+                      color: AppPalette.whiteColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(height: 6),
 
                 Align(
                   alignment: Alignment.bottomRight,

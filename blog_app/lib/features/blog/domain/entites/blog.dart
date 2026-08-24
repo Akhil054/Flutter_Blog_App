@@ -12,6 +12,7 @@ class Blog {
   final String imageUrl;
   final List<String> topics;
   final DateTime updatedAt;
+  final String author;
 
   Blog({
     required this.id,
@@ -21,6 +22,7 @@ class Blog {
     required this.imageUrl,
     required this.topics,
     required this.updatedAt,
+    this.author = 'Anonymous',
   });
 
 
@@ -34,6 +36,7 @@ class Blog {
       'imageUrl': imageUrl,
       'topics': topics,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'author': author,
     };
   }
 }

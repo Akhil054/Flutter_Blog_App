@@ -81,7 +81,27 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
           .select()
           .order('updated_at', ascending: false);
 
-      return blogs.map((blog) => BlogModel.fromJson(blog)).toList();
+      final blogModels = blogs.map((blog) => BlogModel.fromJson(blog)).toList();
+      if (blogModels.isEmpty) return blogModels;
+
+      /// fetching the poster's name for each unique posterId so the UI can
+      /// show "who wrote this" without a DB-level foreign key join
+      final posterIds = blogModels.map((blog) => blog.posterId).toSet().toList();
+      final users = await supabaseClient
+          .from('profiles')
+          .select('id, name')
+          .inFilter('id', posterIds);
+
+      final nameByPosterId = {
+        for (final user in users)
+          if (user['id'] != null) user['id'] as String: (user['name'] as String?) ?? 'Anonymous',
+      };
+
+      return blogModels
+          .map((blog) => blog.copyWith(
+                author: nameByPosterId[blog.posterId] ?? 'Anonymous',
+              ))
+          .toList();
     } catch (e) {
       throw Exception(e.toString());
     }

@@ -56,6 +56,7 @@ class _BlogPageState extends State<BlogPage> {
           ),
         ],
       ),
+
       body: BlocConsumer<BlogBloc, BlogState>(
         listener: (context, state) {
           if (state is BlogFailure) {
