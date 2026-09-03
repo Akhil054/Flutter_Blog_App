@@ -11,7 +11,12 @@ abstract interface class BlogRemoteDataSource{
     required BlogModel blog,
   });
 
-  Future<List<BlogModel>> getAllBlogs();
+  Future<List<BlogModel>> getAllBlogs({
+    required int page,
+    int limit,
+  });
+
+  Future<bool> toggleLikeBlog(String blogId);
 
 }
 
@@ -73,13 +78,20 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
   }
 
   @override
-  Future<List<BlogModel>> getAllBlogs() async {
+  Future<List<BlogModel>> getAllBlogs({
+    required int page,
+    int limit = 10,
+  }) async {
     try {
-      /// fetching all blogs from the database, most recently updated first
+      final start = page * limit;
+      final end = start + limit - 1;
+
+      /// fetching one page of blogs, most recently updated first
       final blogs = await supabaseClient
           .from('blogs')
           .select()
-          .order('updated_at', ascending: false);
+          .order('updated_at', ascending: false)
+          .range(start, end);
 
       final blogModels = blogs.map((blog) => BlogModel.fromJson(blog)).toList();
       if (blogModels.isEmpty) return blogModels;
@@ -97,11 +109,62 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
           if (user['id'] != null) user['id'] as String: (user['name'] as String?) ?? 'Anonymous',
       };
 
+      /// fetching likes for this page of blogs so we can show a count and
+      /// whether the current user has liked each one
+      final blogIds = blogModels.map((blog) => blog.id).toList();
+      final likeRows = await supabaseClient
+          .from('blog_likes')
+          .select('blog_id, user_id')
+          .inFilter('blog_id', blogIds);
+
+      final currentUserId = supabaseClient.auth.currentUser?.id;
+      final likeCountByBlogId = <String, int>{};
+      final likedBlogIds = <String>{};
+      for (final row in likeRows) {
+        final blogId = row['blog_id'] as String?;
+        if (blogId == null) continue;
+        likeCountByBlogId[blogId] = (likeCountByBlogId[blogId] ?? 0) + 1;
+        if (row['user_id'] == currentUserId) likedBlogIds.add(blogId);
+      }
+
       return blogModels
           .map((blog) => blog.copyWith(
                 author: nameByPosterId[blog.posterId] ?? 'Anonymous',
+                likesCount: likeCountByBlogId[blog.id] ?? 0,
+                isLiked: likedBlogIds.contains(blog.id),
               ))
           .toList();
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<bool> toggleLikeBlog(String blogId) async {
+    try {
+      final userId = supabaseClient.auth.currentUser?.id;
+      if (userId == null) throw Exception('You must be logged in to like a blog');
+
+      final existing = await supabaseClient
+          .from('blog_likes')
+          .select()
+          .eq('blog_id', blogId)
+          .eq('user_id', userId);
+
+      if (existing.isNotEmpty) {
+        await supabaseClient
+            .from('blog_likes')
+            .delete()
+            .eq('blog_id', blogId)
+            .eq('user_id', userId);
+        return false;
+      } else {
+        await supabaseClient.from('blog_likes').insert({
+          'blog_id': blogId,
+          'user_id': userId,
+        });
+        return true;
+      }
     } catch (e) {
       throw Exception(e.toString());
     }

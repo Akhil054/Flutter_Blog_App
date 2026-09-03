@@ -3,6 +3,7 @@ import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.
 import 'package:blog_app/features/blog/data/repository/blog_repository_impl.dart';
 import 'package:blog_app/features/blog/domain/repository/blog_repository.dart';
 import 'package:blog_app/features/blog/domain/useCases/get_all_blogs.dart';
+import 'package:blog_app/features/blog/domain/useCases/toggle_like_blog.dart';
 import 'package:blog_app/features/blog/domain/useCases/upload_blog.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/repository/auth_repository.dart';
@@ -112,11 +113,17 @@ void _initBlog() {
         serviceLocator(),
       ),
     )
+    ..registerFactory(
+      () => ToggleLikeBlog(
+        serviceLocator(),
+      ),
+    )
     // Bloc
     ..registerLazySingleton(
       () => BlogBloc(
         uploadBlog: serviceLocator(),
         getAllBlogs: serviceLocator(),
+        toggleLikeBlog: serviceLocator(),
       ),
     );
 }

@@ -1,4 +1,4 @@
-/// converts blog object to/from JSON for database storage. 
+/// converts blog object to/from JSON for database storage.
 import 'dart:convert';
 
 import '../domain/entites/blog.dart';
@@ -14,6 +14,8 @@ class BlogModel extends Blog{
     required super.topics,
     required super.updatedAt,
     super.author,
+    super.likesCount,
+    super.isLiked,
   });
 
   Map<String, dynamic> toJson() {
@@ -42,6 +44,7 @@ class BlogModel extends Blog{
     );
   }
 
+  @override
   BlogModel copyWith({
     String? id,
     String? posterId,
@@ -51,6 +54,8 @@ class BlogModel extends Blog{
     List<String>? topics,
     DateTime? updatedAt,
     String? author,
+    int? likesCount,
+    bool? isLiked,
   }) {
     return BlogModel(
       id: id ?? this.id,
@@ -61,6 +66,8 @@ class BlogModel extends Blog{
       topics: topics ?? this.topics,
       updatedAt: updatedAt ?? this.updatedAt,
       author: author ?? this.author,
+      likesCount: likesCount ?? this.likesCount,
+      isLiked: isLiked ?? this.isLiked,
     );
   }
 

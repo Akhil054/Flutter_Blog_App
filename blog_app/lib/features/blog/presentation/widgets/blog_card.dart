@@ -6,11 +6,13 @@ import 'package:flutter/material.dart';
 class BlogCard extends StatelessWidget {
   final Blog blog;
   final Color color;
+  final VoidCallback? onLikeTap;
 
   const BlogCard({
     super.key,
     required this.blog,
     required this.color,
+    this.onLikeTap,
   });
 
   @override
@@ -74,15 +76,44 @@ class BlogCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
 
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    blog.topics.isNotEmpty ? blog.topics.first : '',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppPalette.whiteColor,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    InkWell(
+                      borderRadius: BorderRadius.circular(20),
+                      onTap: onLikeTap,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              blog.isLiked ? Icons.favorite : Icons.favorite_border,
+                              size: 18,
+                              color: blog.isLiked
+                                  ? Colors.redAccent
+                                  : AppPalette.whiteColor,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${blog.likesCount}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppPalette.whiteColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
+                    Text(
+                      blog.topics.isNotEmpty ? blog.topics.first : '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppPalette.whiteColor,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

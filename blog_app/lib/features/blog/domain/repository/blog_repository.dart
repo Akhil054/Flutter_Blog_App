@@ -14,6 +14,12 @@ abstract interface class BlogRepository{
     required List<String> topics,
   });
 
-  Future<Either<Failure, List<Blog>>> getAllBlogs();
+  Future<Either<Failure, List<Blog>>> getAllBlogs({
+    required int page,
+    int limit,
+  });
+
+  /// toggles the current user's like on a blog; returns the new liked state
+  Future<Either<Failure, bool>> toggleLikeBlog(String blogId);
 
 }

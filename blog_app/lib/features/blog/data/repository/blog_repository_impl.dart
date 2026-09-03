@@ -64,10 +64,25 @@ class BlogRepositoryImpl implements BlogRepository{
   }
 
   @override
-  Future<Either<Failure, List<Blog>>> getAllBlogs() async {
+  Future<Either<Failure, List<Blog>>> getAllBlogs({
+    required int page,
+    int limit = 10,
+  }) async {
     try {
-      final blogs = await blogRemoteDataSource.getAllBlogs();
+      final blogs = await blogRemoteDataSource.getAllBlogs(page: page, limit: limit);
       return right(blogs);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> toggleLikeBlog(String blogId) async {
+    try {
+      final isLiked = await blogRemoteDataSource.toggleLikeBlog(blogId);
+      return right(isLiked);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     } catch (e) {

@@ -5,7 +5,14 @@ sealed class BlogState {}
 
 final class BlogDisplaySuccess extends BlogState {
   final List<Blog> blogs;
-  BlogDisplaySuccess(this.blogs);
+  final bool hasReachedMax;
+  final bool isLoadingMore;
+
+  BlogDisplaySuccess(
+    this.blogs, {
+    this.hasReachedMax = false,
+    this.isLoadingMore = false,
+  });
 }
 
 /// introducing loading, failure, and success state

@@ -21,3 +21,12 @@ final class BlogUpload extends BlogEvent {
 }
 
 final class BlogFetchAllBlogs extends BlogEvent {}
+
+/// requests the next page of blogs and appends them to the current list
+final class BlogFetchMoreBlogs extends BlogEvent {}
+
+final class BlogToggleLike extends BlogEvent {
+  final String blogId;
+
+  BlogToggleLike({required this.blogId});
+}

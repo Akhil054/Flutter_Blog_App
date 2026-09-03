@@ -26,11 +26,44 @@ class _BlogPageState extends State<BlogPage> {
   /// current text typed into the search bar, used to filter the fetched blogs
   String searchQuery = '';
 
+  /// last known-good list of blogs; kept around so a transient error (e.g. a
+  /// failed like or a failed pull-to-refresh) doesn't blank the whole page
+  List<Blog> _blogs = [];
+  bool _hasReachedMax = false;
+
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     /// fetch all blogs as soon as this page is shown
     context.read<BlogBloc>().add(BlogFetchAllBlogs());
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// loads the next page once the user nears the bottom of the list;
+  /// skipped while a search filter is active since search only covers
+  /// blogs already loaded in memory
+  void _onScroll() {
+    if (_hasReachedMax || searchQuery.trim().isNotEmpty) return;
+    final position = _scrollController.position;
+    if (position.pixels >= position.maxScrollExtent - 200) {
+      context.read<BlogBloc>().add(BlogFetchMoreBlogs());
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    context.read<BlogBloc>().add(BlogFetchAllBlogs());
+    await context.read<BlogBloc>().stream.firstWhere(
+          (state) => state is BlogDisplaySuccess || state is BlogFailure,
+        );
   }
 
   /// keeps blogs whose title, content, author or topics contain the query,
@@ -87,28 +120,52 @@ class _BlogPageState extends State<BlogPage> {
                 if (state is BlogFailure) {
                   showSnackBar(context, state.error);
                 }
+                if (state is BlogDisplaySuccess) {
+                  setState(() {
+                    _blogs = state.blogs;
+                    _hasReachedMax = state.hasReachedMax;
+                  });
+                }
               },
               builder: (context, state) {
-                if (state is BlogLoading) {
+                if (state is BlogLoading && _blogs.isEmpty) {
                   return const Loader();
                 }
 
-                if (state is BlogDisplaySuccess) {
-                  final blogs = _filterBlogs(state.blogs);
+                final blogs = _filterBlogs(_blogs);
+                final isLoadingMore = state is BlogDisplaySuccess && state.isLoadingMore;
 
-                  if (blogs.isEmpty) {
-                    return Center(
-                      child: Text(
-                        state.blogs.isEmpty
-                            ? 'No blogs yet.'
-                            : 'No blogs match "$searchQuery".',
-                      ),
-                    );
-                  }
+                if (blogs.isEmpty) {
+                  return RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    child: ListView(
+                      children: [
+                        SizedBox(height: MediaQuery.of(context).size.height * 0.35),
+                        Center(
+                          child: Text(
+                            _blogs.isEmpty
+                                ? 'No blogs yet.'
+                                : 'No blogs match "$searchQuery".',
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-                  return ListView.builder(
-                    itemCount: blogs.length,
+                return RefreshIndicator(
+                  onRefresh: _onRefresh,
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    itemCount: blogs.length + (isLoadingMore ? 1 : 0),
                     itemBuilder: (context, index) {
+                      if (index >= blogs.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
                       final blog = blogs[index];
                       final colors = [
                         Colors.deepPurple,
@@ -118,12 +175,13 @@ class _BlogPageState extends State<BlogPage> {
                       return BlogCard(
                         blog: blog,
                         color: colors[index % colors.length],
+                        onLikeTap: () => context
+                            .read<BlogBloc>()
+                            .add(BlogToggleLike(blogId: blog.id)),
                       );
                     },
-                  );
-                }
-
-                return const SizedBox.shrink();
+                  ),
+                );
               },
             ),
           ),
