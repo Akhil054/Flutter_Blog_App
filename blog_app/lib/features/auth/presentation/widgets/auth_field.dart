@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class AuthField extends StatelessWidget {
+class AuthField extends StatefulWidget {
 
   /// Created an Constuctor
   final String hintText;
@@ -17,24 +17,46 @@ class AuthField extends StatelessWidget {
   });
 
   @override
+  State<AuthField> createState() => _AuthFieldState();
+}
+
+class _AuthFieldState extends State<AuthField> {
+  /// tracks whether the password is currently hidden; only relevant
+  /// when the field was created with isObsecureText true
+  late bool _obscureText = widget.isObsecureText;
+
+  @override
   Widget build(BuildContext context) {
     /// coz entier filed is of Form
     return TextFormField(
       /// passed the controller
-      controller: controller,
+      controller: widget.controller,
       decoration: InputDecoration(
-        hintText:hintText
+        hintText: widget.hintText,
+        /// eye icon to toggle password visibility - shown only on password fields
+        suffixIcon: widget.isObsecureText
+            ? IconButton(
+                icon: Icon(
+                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscureText = !_obscureText;
+                  });
+                },
+              )
+            : null,
       ),
       /// Validates the input field from signup page so we use the validator
       validator:(value){
         /// Giving an condition i.e if user is not given any vlaues
         if(value!.isEmpty){
-          return "$hintText is missing !";
+          return "${widget.hintText} is missing !";
         }
         /// If everything is correct
         return null;
       },
-      obscureText:  isObsecureText,
+      obscureText: _obscureText,
       // obscuringCharacter: '*',
     );
   }
