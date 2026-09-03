@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 
 import '../../../../core/common/Widgets/loader.dart';
-import '../../../../core/common/Widgets/show_snakbar.dart';
+import '../../../../core/common/Widgets/show_error_dialog.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_field.dart';
@@ -51,9 +51,10 @@ class _LoginPageState extends State<LoginPage> {
         padding: const EdgeInsets.all(10.0),
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            /// If its fail to verify it shows an bottom snack bar
+            /// If it fails to verify (wrong password/username etc.)
+            /// show a popup dialog instead of a bottom snack bar
             if(state is AuthFailure){
-              showSnackBar(context, state.message);
+              showErrorDialog(context, state.message);
             }
           },
           /// check if the state is loading then show the loader else show the form

@@ -1,4 +1,5 @@
 import 'package:blog_app/core/common/entites/user.dart';
+import 'package:blog_app/error/auth_error_message.dart';
 import 'package:blog_app/error/exception.dart';
 import 'package:blog_app/error/failures.dart';
 import 'package:fpdart/fpdart.dart';
@@ -67,7 +68,8 @@ class AuthRepositoryImp  implements AuthRepository {
           /// wrote as sb.AuthException coz its coming from supa base lib. sb exposes the user class as well as we created one i.e User.
           /// imported the prefixes as  sb..
         } on sb.AuthException catch (e){
-          return left(Failure(e.message));
+          /// never surface the raw supabase message to the UI
+          return left(Failure(authErrorMessage(e)));
         }
 
           on ServerException catch (e){

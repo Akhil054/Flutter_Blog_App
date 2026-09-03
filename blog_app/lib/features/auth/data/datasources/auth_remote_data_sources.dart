@@ -1,3 +1,4 @@
+import 'package:blog_app/error/auth_error_message.dart';
 import 'package:blog_app/error/exception.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -41,13 +42,16 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
         email: email,
       );
       if (response.user == null) {
-        throw const ServerException('User is null');
+        throw const ServerException('Invalid email or password.');
       }
       /// not null returning the user id..
       /// get an raw data & converting them into model using fromJson
       return UserModel.fromJson(response.user!.toJson());
+    } on ServerException {
+      rethrow;
     } catch (e) {
-      throw ServerException(e.toString());
+      /// Map raw errors (AuthApiException etc.) to a user friendly message
+      throw ServerException(authErrorMessage(e));
     }
   }
 
@@ -77,7 +81,7 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
       print('DEBUG: supabase response user=${response.user?.id}');
       if (response.user == null) {
         /// Custom exception
-        throw const ServerException('User is null');
+        throw const ServerException('Could not create your account. Please try again.');
       }
 
       /// Insert the user's name and email into the public 'users' table
@@ -92,9 +96,12 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
 
       /// not null returning the user id..
       return UserModel.fromJson(response.user!.toJson());
+    } on ServerException {
+      rethrow;
     } catch (e) {
       print('DEBUG: signup exception: $e');
-      throw ServerException(e.toString());
+      /// Map raw errors (AuthApiException etc.) to a user friendly message
+      throw ServerException(authErrorMessage(e));
     }
   }
 
@@ -111,8 +118,11 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
       }
       return null;
     }
+    on ServerException {
+      rethrow;
+    }
     catch (e) {
-      throw ServerException(e.toString());
+      throw ServerException(authErrorMessage(e));
     }
   }
 
