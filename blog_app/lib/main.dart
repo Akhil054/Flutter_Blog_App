@@ -17,6 +17,10 @@ void main() async {
   /// calling the init dependecies
    await initDependencies();
 
+  /// read the theme the user last picked so the first frame already
+  /// renders in it instead of flashing the default and then switching
+  final savedThemeMode = await ThemeCubit.loadSavedTheme();
+
   runApp(MultiBlocProvider(
     providers: [
       BlocProvider(
@@ -29,7 +33,7 @@ void main() async {
         create: (_) => serviceLocator<BlogBloc>(),
       ),
       BlocProvider(
-        create: (_) => ThemeCubit(),
+        create: (_) => ThemeCubit(savedThemeMode),
       ),
     ],
     child: const MyApp(),

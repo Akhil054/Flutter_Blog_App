@@ -87,12 +87,6 @@ class _BlogPageState extends State<BlogPage> {
         title: const Text('Blog App'),
         actions:[
           IconButton(
-            onPressed:() {
-              Navigator.push(context, AddNewBlog.route());
-            },
-            icon: const Icon(CupertinoIcons.add_circled),
-          ),
-          IconButton(
             icon: Icon(
               context.watch<ThemeCubit>().state == ThemeMode.dark
                   ? Icons.light_mode
@@ -110,6 +104,14 @@ class _BlogPageState extends State<BlogPage> {
             icon: const Icon(Icons.logout_outlined),
           ),
         ],
+      ),
+
+      /// moved from the app bar - add new blog now lives as a bottom FAB
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, AddNewBlog.route());
+        },
+        child: const Icon(CupertinoIcons.add_circled),
       ),
 
       body: Column(
