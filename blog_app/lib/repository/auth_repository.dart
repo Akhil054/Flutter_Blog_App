@@ -19,4 +19,7 @@ abstract interface class AuthRepository {
     /// This method is used to check if the user is already logged in or not
      Future<Either<Failure, User>> CurrentUser();
 
+     /// Ends the current session
+     Future<Either<Failure, bool>> logOut();
+
 }

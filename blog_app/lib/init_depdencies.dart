@@ -14,6 +14,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'features/auth/data/datasources/auth_remote_data_sources.dart';
 import 'features/auth/data/repositories/auth_repository_imp.dart';
 import 'features/auth/domain/usecases/current_user.dart';
+import 'features/auth/domain/usecases/user_log_out.dart';
 import 'features/auth/domain/usecases/user_sign_in.dart';
 import 'features/auth/domain/usecases/user_sign_up.dart';
 import 'features/auth/presentation/bloc/auth_bloc.dart';
@@ -76,6 +77,11 @@ void _initAuth() {
       ),
   )
 
+  ..registerFactory(
+      () => UserLogOut(serviceLocator(),
+      ),
+  )
+
     /// Bloc
   /// Register Auth Bloc
   ..registerLazySingleton(
@@ -83,6 +89,7 @@ void _initAuth() {
       userSignUp: serviceLocator(),
       userLogin: serviceLocator(),
       currentUser: serviceLocator(),
+      userLogOut: serviceLocator(),
       appUserCubit: serviceLocator(),
     ),
   );

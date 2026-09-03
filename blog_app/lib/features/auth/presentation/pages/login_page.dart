@@ -57,12 +57,16 @@ class _LoginPageState extends State<LoginPage> {
               showErrorDialog(context, state.message);
             }
           },
-          /// check if the state is loading then show the loader else show the form
+          /// Form stays mounted at all times (loading or not) so the entered
+          /// text, cursor position and focus are never lost/rebuilt -
+          /// a loading overlay is shown on top instead of swapping it out.
           builder: (context, state) {
-            if(state is AuthLoading){
-              return const Loader();
-            }
-            return Form(
+            final isLoading = state is AuthLoading;
+            return Stack(
+              children: [
+                AbsorbPointer(
+                  absorbing: isLoading,
+                  child: Form(
                   key: formKey,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -122,7 +126,14 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                );
+                  ),
+                ),
+                if(isLoading)
+                  const Positioned.fill(
+                    child: Loader(),
+                  ),
+              ],
+            );
           },
         ),
       ),

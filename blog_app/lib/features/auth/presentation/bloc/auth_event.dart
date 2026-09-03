@@ -29,3 +29,8 @@ class AuthLogin extends AuthEvent {
 final class AuthIsUserLoggedIn extends AuthEvent {
 
 }
+
+/// Fired when the user taps logout
+final class AuthLogOut extends AuthEvent {
+
+}

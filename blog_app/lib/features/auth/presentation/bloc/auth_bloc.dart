@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/common/cubits/app_user/app_user_cubit.dart';
 import '../../../../core/common/entites/user.dart';
 import '../../domain/usecases/current_user.dart';
+import '../../domain/usecases/user_log_out.dart';
 import '../../domain/usecases/user_sign_in.dart';
 import '../../domain/usecases/user_sign_up.dart';
 
@@ -19,22 +20,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final UserSignUp _userSignUp;
   final UserLogin _userLogin;
   final CurrentUser _currentUser;
+  final UserLogOut _userLogOut;
   final AppUserCubit _appUserCubit;
 
   AuthBloc({
     required UserSignUp userSignUp,
     required UserLogin userLogin,
     required CurrentUser currentUser,
+    required UserLogOut userLogOut,
     required AppUserCubit appUserCubit,
   }) : _userSignUp = userSignUp,
         _userLogin = userLogin,
         _currentUser =  currentUser,
+        _userLogOut = userLogOut,
         _appUserCubit = appUserCubit,
         super(AuthInitial()) {
           on<AuthEvent>((_, emit) => emit(AuthLoading()));
         on<AuthSignUp>(_onAuthSignUp);
         on<AuthLogin>(_onAuthLogin);
         on<AuthIsUserLoggedIn>(_isUserLoggedIn);
+        on<AuthLogOut>(_onAuthLogOut);
 
       }
 
@@ -97,5 +102,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     {
       _appUserCubit.updateUser(user);
       emit(AuthSuccess(user));
+    }
+
+    void _onAuthLogOut(AuthLogOut event, Emitter<AuthState> emit) async {
+      /// ends the supabase session
+      final res = await _userLogOut(NoParams());
+      res.fold(
+        (failure) => emit(AuthFailure(failure.message)),
+        (_) {
+          /// AppUserCubit flipping to logged-out makes MaterialApp's home
+          /// swap back to LoginPage in place - no route is pushed here so
+          /// there's nothing left on the back stack to return to.
+          _appUserCubit.updateUser(null);
+          emit(AuthInitial());
+        },
+      );
     }
 }

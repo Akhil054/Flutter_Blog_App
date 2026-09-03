@@ -55,6 +55,20 @@ class AuthRepositoryImp  implements AuthRepository {
 
   }
 
+  @override
+  Future<Either<Failure, bool>> logOut() async {
+    try{
+      await remoteDataSource.logout();
+      return right(true);
+    }
+    on sb.AuthException catch (e){
+      return left(Failure(authErrorMessage(e)));
+    }
+    on ServerException catch (e){
+      return left(Failure(e.message));
+    }
+  }
+
 
   /// More cleaner way
   Future<Either<Failure,User>> _getUser(

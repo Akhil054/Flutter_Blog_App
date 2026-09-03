@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/common/Widgets/loader.dart';
 import '../../../../core/common/Widgets/show_snakbar.dart';
 import '../../../../core/common/cubits/theme/theme_cubit.dart';
-import '../../../auth/presentation/pages/login_page.dart';
+import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../domain/entites/blog.dart';
 import '../bloc/blog_bloc.dart';
 import '../widgets/blog_card.dart';
@@ -102,7 +102,10 @@ class _BlogPageState extends State<BlogPage> {
           ),
           IconButton(
             onPressed:(){
-              Navigator.push(context, LoginPage.route());
+              /// Signs out of supabase & flips AppUserCubit to logged-out;
+              /// MaterialApp's home then swaps to LoginPage in place - no
+              /// route is pushed, so there's nothing to "go back" to.
+              context.read<AuthBloc>().add(AuthLogOut());
             },
             icon: const Icon(Icons.logout_outlined),
           ),
