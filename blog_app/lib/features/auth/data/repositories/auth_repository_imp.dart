@@ -1,4 +1,6 @@
 import 'package:blog_app/core/common/entites/user.dart';
+import 'package:blog_app/core/constants/constants.dart';
+import 'package:blog_app/core/network/connection_checker.dart';
 import 'package:blog_app/error/auth_error_message.dart';
 import 'package:blog_app/error/exception.dart';
 import 'package:blog_app/error/failures.dart';
@@ -12,7 +14,8 @@ import '../datasources/auth_remote_data_sources.dart';
 class AuthRepositoryImp  implements AuthRepository {
 
   final AuthRemoteDataSources remoteDataSource;
-  AuthRepositoryImp(this.remoteDataSource);
+  final ConnectionChecker connectionChecker;
+  AuthRepositoryImp(this.remoteDataSource, this.connectionChecker);
 
   @override
   Future<Either<Failure, User>> loginWithEmailPassword({
@@ -43,6 +46,9 @@ class AuthRepositoryImp  implements AuthRepository {
   @override
   Future<Either<Failure, User>> CurrentUser() async {
     try{
+      if(!await connectionChecker.isConnected){
+        return left(Failure(Constants.noConnectionMessage));
+      }
       final user = await remoteDataSource.getCurrentUserData();
       if(user == null){
         return left(Failure('User not logged in'));
@@ -75,6 +81,9 @@ class AuthRepositoryImp  implements AuthRepository {
       Future<User> Function() fn,
       ) async{
         try{
+          if(!await connectionChecker.isConnected){
+            return left(Failure(Constants.noConnectionMessage));
+          }
           final user  = await fn();
           return right(user);
           /// Wrote an try-catch excep coz AuthRemoteDS going to throw an ServerExcep so to catch it
