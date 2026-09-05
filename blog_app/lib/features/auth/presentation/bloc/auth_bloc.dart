@@ -68,14 +68,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         ),
       );
       print('DEBUG: signup result: $res');
-      res.fold(
-        (failure) {
+      await res.fold(
+        (failure) async {
           print('DEBUG: signup FAILED: ${failure.message}');
           emit(AuthFailure(failure.message));
         },
-        (user) {
+        (user) async {
           print('DEBUG: signup SUCCESS uid=$user');
-          _emitAuthSuccess(user, emit);
+          /// Sign up must NOT log the user straight into the app - Supabase's
+          /// signUp() call opens a live session on the client as soon as it
+          /// returns (when email confirmation is off), so sign that session
+          /// back out immediately and leave AppUserCubit logged-out. The
+          /// user then lands back on the Login page and has to sign in like
+          /// anyone else, instead of skipping straight to the blog feed.
+          await _userLogOut(NoParams());
+          emit(AuthSignUpSuccess());
         },
       );
     }

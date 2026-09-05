@@ -22,4 +22,7 @@ abstract interface class BlogRepository{
   /// toggles the current user's like on a blog; returns the new liked state
   Future<Either<Failure, bool>> toggleLikeBlog(String blogId);
 
+  /// Number of blogs a given user has posted, used on the profile page.
+  Future<Either<Failure, int>> getUserBlogsCount(String posterId);
+
 }

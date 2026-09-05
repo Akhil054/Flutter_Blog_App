@@ -4,9 +4,11 @@ import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.
 import 'package:blog_app/features/blog/data/repository/blog_repository_impl.dart';
 import 'package:blog_app/features/blog/domain/repository/blog_repository.dart';
 import 'package:blog_app/features/blog/domain/useCases/get_all_blogs.dart';
+import 'package:blog_app/features/blog/domain/useCases/get_user_blogs_count.dart';
 import 'package:blog_app/features/blog/domain/useCases/toggle_like_blog.dart';
 import 'package:blog_app/features/blog/domain/useCases/upload_blog.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
+import 'package:blog_app/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:blog_app/repository/auth_repository.dart';
 import 'package:blog_app/secret/app_secrets.dart';
 import 'package:get_it/get_it.dart';
@@ -138,6 +140,11 @@ void _initBlog() {
         serviceLocator(),
       ),
     )
+    ..registerFactory(
+      () => GetUserBlogsCount(
+        serviceLocator(),
+      ),
+    )
     // Bloc
     ..registerLazySingleton(
       () => BlogBloc(
@@ -146,4 +153,12 @@ void _initBlog() {
         toggleLikeBlog: serviceLocator(),
       ),
     );
+
+  /// Profile page - page-scoped, so a fresh Cubit each time (registerFactory)
+  /// rather than a singleton shared across the whole app.
+  serviceLocator.registerFactory(
+    () => ProfileCubit(
+      getUserBlogsCount: serviceLocator(),
+    ),
+  );
 }

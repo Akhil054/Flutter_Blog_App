@@ -88,14 +88,23 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
       }
 
       /// Insert the user's name and email into the public 'users' table
-      /// so the profile data is visible in your database
-      print('DEBUG: inserting into users table');
-      await supabaseClient.from('users').insert({
-        'id': response.user!.id,
-        'name': name,
-        'email': email,
-      });
-      print('DEBUG: insert into users table success');
+      /// so the profile data is visible in your database.
+      /// This is best-effort: the auth account is already created at this
+      /// point, so a failure here (missing table, RLS policy, duplicate
+      /// row on a retried sign up, etc.) must not fail the whole sign up -
+      /// it would otherwise show "Something went wrong" for an account
+      /// that was actually created successfully.
+      try {
+        print('DEBUG: inserting into users table');
+        await supabaseClient.from('users').insert({
+          'id': response.user!.id,
+          'name': name,
+          'email': email,
+        });
+        print('DEBUG: insert into users table success');
+      } catch (e) {
+        print('DEBUG: insert into users table FAILED (ignored): $e');
+      }
 
       /// not null returning the user id..
       return UserModel.fromJson(response.user!.toJson());

@@ -18,6 +18,9 @@ abstract interface class BlogRemoteDataSource{
 
   Future<bool> toggleLikeBlog(String blogId);
 
+  /// Number of blogs a given user has posted, used on the profile page.
+  Future<int> getUserBlogsCount(String posterId);
+
 }
 
 class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
@@ -165,6 +168,18 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
         });
         return true;
       }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<int> getUserBlogsCount(String posterId) async {
+    try {
+      return await supabaseClient
+          .from('blogs')
+          .count()
+          .eq('poster_id', posterId);
     } catch (e) {
       throw Exception(e.toString());
     }

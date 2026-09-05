@@ -56,6 +56,13 @@ class _SignUpPageState extends State<SignUpPage> {
             if(state is AuthFailure){
               showSnackBar(context, state.message);
             }
+            /// Account created successfully - the user is deliberately NOT
+            /// logged in yet (see AuthBloc._onAuthSignUp), so send them back
+            /// to the Login page to sign in themselves.
+            if(state is AuthSignUpSuccess){
+              showSnackBar(context, 'Account created! Please sign in.');
+              Navigator.pop(context);
+            }
           },
           /// check if the state is loading then show the loader else show the form
           builder: (context, state) {

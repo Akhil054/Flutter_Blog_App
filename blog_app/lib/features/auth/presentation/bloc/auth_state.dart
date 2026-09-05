@@ -13,6 +13,11 @@ final class AuthSuccess extends AuthState {
   AuthSuccess(this.user);
 }
 
+/// Emitted after a successful sign up. Deliberately carries no user and
+/// never touches [AppUserCubit] - the account was created but the user is
+/// not logged in yet, they still need to sign in on the Login page.
+final class AuthSignUpSuccess extends AuthState {}
+
 final class AuthFailure extends AuthState {
   final String message;
 
