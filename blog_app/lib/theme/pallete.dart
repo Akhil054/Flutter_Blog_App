@@ -18,11 +18,32 @@ class AppPalette {
   static const Color errorColor = Colors.redAccent;
   static const Color transparantColor = Colors.transparent;
 
-  /// Rotating backgrounds for blog list cards, drawn from the same swatch
-  /// so they read as part of the palette instead of clashing with it.
-  /// Restricted to the three darkest tones - the cards overlay white text
-  /// (title/author/topic/like count), and the lighter two swatch tones
-  /// (lightBorderColor, lightBackgroundColor) don't give white text enough
-  /// contrast to stay readable.
-  static const List<Color> blogCardColors = [backgroundColor, gradient1, gradient2];
+  /// Rotating backgrounds for blog list cards - every swatch tone EXCEPT
+  /// whichever one is currently the scaffold's own background, so a card
+  /// never blends invisibly into the page behind it. Two lists because that
+  /// "own background" tone differs by theme: backgroundColor (navy) in dark
+  /// mode, lightBackgroundColor (cream) in light mode. backgroundColor
+  /// itself is untouched - only which colors the *card* picks from changes.
+  static const List<Color> blogCardColorsDark = [
+    gradient1, // slate
+    gradient2, // mauve
+    lightBorderColor, // dusty rose
+    lightBackgroundColor, // cream
+  ];
+
+  static const List<Color> blogCardColorsLight = [
+    backgroundColor, // navy
+    gradient1, // slate
+    gradient2, // mauve
+    lightBorderColor, // dusty rose
+  ];
+
+  /// The two lightest swatch tones (dusty rose, cream) don't give white
+  /// overlay text enough contrast, so cards using them need dark text
+  /// instead - everything else is dark enough for white text.
+  static Color onBlogCard(Color cardColor) {
+    return (cardColor == lightBorderColor || cardColor == lightBackgroundColor)
+        ? blackColor
+        : whiteColor;
+  }
 }

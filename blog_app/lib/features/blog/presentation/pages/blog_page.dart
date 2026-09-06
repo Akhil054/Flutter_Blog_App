@@ -156,6 +156,11 @@ class _BlogPageState extends State<BlogPage> {
                   );
                 }
 
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final colors = isDark
+                    ? AppPalette.blogCardColorsDark
+                    : AppPalette.blogCardColorsLight;
+
                 return RefreshIndicator(
                   onRefresh: _onRefresh,
                   child: ListView.builder(
@@ -170,7 +175,6 @@ class _BlogPageState extends State<BlogPage> {
                       }
 
                       final blog = blogs[index];
-                      final colors = AppPalette.blogCardColors;
                       return BlogCard(
                         blog: blog,
                         color: colors[index % colors.length],

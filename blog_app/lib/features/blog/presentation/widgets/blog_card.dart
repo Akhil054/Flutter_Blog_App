@@ -18,6 +18,10 @@ class BlogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    /// dusty rose / cream cards need dark text instead of the white used on
+    /// the darker rotation colors - see AppPalette.onBlogCard
+    final textColor = AppPalette.onBlogCard(color);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
@@ -38,10 +42,10 @@ class BlogCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     blog.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: AppPalette.whiteColor,
+                      color: textColor,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -69,10 +73,10 @@ class BlogCard extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'by ${blog.author}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontStyle: FontStyle.italic,
-                      color: AppPalette.whiteColor,
+                      color: textColor,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -88,12 +92,13 @@ class BlogCard extends StatelessWidget {
                       likesCount: blog.likesCount,
                       isLiked: blog.isLiked,
                       onTap: onLikeTap,
+                      color: textColor,
                     ),
                     Text(
                       blog.topics.isNotEmpty ? blog.topics.first : '',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        color: AppPalette.whiteColor,
+                        color: textColor,
                       ),
                     ),
                   ],

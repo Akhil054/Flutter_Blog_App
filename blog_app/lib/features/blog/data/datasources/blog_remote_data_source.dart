@@ -89,10 +89,17 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
       final start = page * limit;
       final end = start + limit - 1;
 
+      /// the main feed is "other people's blogs" - your own posts show up
+      /// on your profile page instead, so exclude them here at the query
+      /// level (before .range()) so page sizes/pagination stay accurate
+      final currentUserId = supabaseClient.auth.currentUser?.id;
+      var query = supabaseClient.from('blogs').select();
+      if (currentUserId != null) {
+        query = query.neq('poster_id', currentUserId);
+      }
+
       /// fetching one page of blogs, most recently updated first
-      final blogs = await supabaseClient
-          .from('blogs')
-          .select()
+      final blogs = await query
           .order('updated_at', ascending: false)
           .range(start, end);
 
