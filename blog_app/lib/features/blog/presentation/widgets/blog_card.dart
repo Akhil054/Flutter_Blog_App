@@ -54,6 +54,12 @@ class BlogCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      /// explicit, not inherited: the card's own background
+                      /// (AppPalette.blogCardColors) is always dark regardless
+                      /// of whether the app is in light or dark theme, so the
+                      /// title needs to stay white either way rather than
+                      /// following the ambient theme's default text color
+                      color: AppPalette.whiteColor,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,

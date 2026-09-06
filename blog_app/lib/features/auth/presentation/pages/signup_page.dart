@@ -128,9 +128,14 @@ class _SignUpPageState extends State<SignUpPage> {
                         children: [
                           TextSpan(text: 'Sign In',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: AppPalette.gradient2,
-                              fontWeight: FontWeight.bold
-                            ))]
+                              /// see the same swap in login_page.dart's "Sign
+                              /// up" link - gradient1 disappears against the
+                              /// dark theme's near-black background
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? AppPalette.gradient2
+                                  : AppPalette.gradient1,
+                              fontWeight: FontWeight.w600,
+                            ),)]
                         ),
                         ),
                       ),

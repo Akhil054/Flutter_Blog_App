@@ -85,6 +85,7 @@ class _LoginPageState extends State<LoginPage> {
         
                       const SizedBox(height: 15),
         
+                      /// AuthButton is a custom widget created in auth_button.dart file  
                       AuthButton(
                         buttonText: 'Sign In',
                         onPressed: () {
@@ -118,9 +119,16 @@ class _LoginPageState extends State<LoginPage> {
                             children: [
                               TextSpan(text: 'Sign up',
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      color: AppPalette.gradient2,
-                                      fontWeight: FontWeight.bold
-                                  ))]
+                                      /// gradient1 (dark slate) reads fine on
+                                      /// the light theme's cream background,
+                                      /// but nearly disappears on the dark
+                                      /// theme's near-black one - swap to the
+                                      /// lighter gradient2 (mauve) there
+                                      color: Theme.of(context).brightness == Brightness.dark
+                                          ? AppPalette.gradient2
+                                          : AppPalette.gradient1,
+                                      fontWeight: FontWeight.w600,
+                                  ),)]
                         ),
                         ),
                       ),

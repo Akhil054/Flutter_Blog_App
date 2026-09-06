@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/common/Widgets/loader.dart';
 import '../../../../core/common/Widgets/show_snakbar.dart';
 import '../../../../core/common/cubits/theme/theme_cubit.dart';
+import '../../../../theme/pallete.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../domain/entites/blog.dart';
 import '../bloc/blog_bloc.dart';
@@ -169,11 +170,7 @@ class _BlogPageState extends State<BlogPage> {
                       }
 
                       final blog = blogs[index];
-                      final colors = [
-                        Colors.deepPurple,
-                        Colors.indigo,
-                        Colors.teal,
-                      ];
+                      final colors = AppPalette.blogCardColors;
                       return BlogCard(
                         blog: blog,
                         color: colors[index % colors.length],
