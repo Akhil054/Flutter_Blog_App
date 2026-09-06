@@ -25,4 +25,17 @@ abstract interface class BlogRepository{
   /// All blogs a given user has posted, used on the profile page.
   Future<Either<Failure, List<Blog>>> getUserBlogs(String posterId);
 
+  /// Updates a blog the current user posted. Pass `newImage` only when the
+  /// user picked a replacement picture - otherwise the existing image stays.
+  Future<Either<Failure, Blog>> updateBlog({
+    required String blogId,
+    required String title,
+    required String content,
+    required List<String> topics,
+    File? newImage,
+  });
+
+  /// Deletes a blog the current user posted.
+  Future<Either<Failure, void>> deleteBlog(String blogId);
+
 }

@@ -99,7 +99,7 @@ class ProfilePage extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _YourBlogsSection(state: state),
+                _YourBlogsSection(state: state, posterId: user.id),
                 const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
@@ -190,8 +190,9 @@ class _BlogsPostedCardState extends State<_BlogsPostedCard> {
 /// since the author is always this same user here).
 class _YourBlogsSection extends StatelessWidget {
   final ProfileState state;
+  final String posterId;
 
-  const _YourBlogsSection({required this.state});
+  const _YourBlogsSection({required this.state, required this.posterId});
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +223,10 @@ class _YourBlogsSection extends StatelessWidget {
       children: [
         for (var i = 0; i < blogs.length; i++) ...[
           if (i > 0) const SizedBox(height: 10),
-          BlogSummaryTile(blog: blogs[i]),
+          BlogSummaryTile(
+            blog: blogs[i],
+            onChanged: () => context.read<ProfileCubit>().loadUserBlogs(posterId),
+          ),
         ],
       ],
     );

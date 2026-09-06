@@ -3,9 +3,11 @@ import 'package:blog_app/core/network/connection_checker.dart';
 import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.dart';
 import 'package:blog_app/features/blog/data/repository/blog_repository_impl.dart';
 import 'package:blog_app/features/blog/domain/repository/blog_repository.dart';
+import 'package:blog_app/features/blog/domain/useCases/delete_blog.dart';
 import 'package:blog_app/features/blog/domain/useCases/get_all_blogs.dart';
 import 'package:blog_app/features/blog/domain/useCases/get_user_blogs.dart';
 import 'package:blog_app/features/blog/domain/useCases/toggle_like_blog.dart';
+import 'package:blog_app/features/blog/domain/useCases/update_blog.dart';
 import 'package:blog_app/features/blog/domain/useCases/upload_blog.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/features/profile/presentation/cubit/profile_cubit.dart';
@@ -145,12 +147,24 @@ void _initBlog() {
         serviceLocator(),
       ),
     )
+    ..registerFactory(
+      () => UpdateBlog(
+        serviceLocator(),
+      ),
+    )
+    ..registerFactory(
+      () => DeleteBlog(
+        serviceLocator(),
+      ),
+    )
     // Bloc
     ..registerLazySingleton(
       () => BlogBloc(
         uploadBlog: serviceLocator(),
         getAllBlogs: serviceLocator(),
         toggleLikeBlog: serviceLocator(),
+        updateBlog: serviceLocator(),
+        deleteBlog: serviceLocator(),
       ),
     );
 

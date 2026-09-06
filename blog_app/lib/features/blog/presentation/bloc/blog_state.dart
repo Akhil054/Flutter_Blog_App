@@ -28,3 +28,13 @@ final class BlogFailure extends BlogState {
 final class BlogSuccess extends BlogState {
 
 }
+
+/// dedicated states for update/delete, separate from BlogSuccess (which
+/// AddNewBlog's listener treats as "go to the blog feed") so a screen
+/// listening for one doesn't accidentally react to the other
+final class BlogUpdateSuccess extends BlogState {
+  final Blog blog;
+  BlogUpdateSuccess(this.blog);
+}
+
+final class BlogDeleteSuccess extends BlogState {}

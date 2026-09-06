@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 import '../../domain/entites/blog.dart';
+import '../../domain/useCases/delete_blog.dart';
 import '../../domain/useCases/get_all_blogs.dart';
 import '../../domain/useCases/toggle_like_blog.dart';
+import '../../domain/useCases/update_blog.dart';
 import '../../domain/useCases/upload_blog.dart';
 part 'blog_event.dart';
 part 'blog_state.dart';
@@ -12,6 +14,8 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
   final UploadBlog uploadBlog;
   final GetAllBlogs getAllBlogs;
   final ToggleLikeBlog toggleLikeBlog;
+  final UpdateBlog updateBlog;
+  final DeleteBlog deleteBlog;
 
   static const int pageLimit = 10;
   int _page = 0;
@@ -20,11 +24,15 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
     required this.uploadBlog,
     required this.getAllBlogs,
     required this.toggleLikeBlog,
+    required this.updateBlog,
+    required this.deleteBlog,
   }) : super(BlogInitial()) {
     on<BlogUpload>(_onBlogUpload);
     on<BlogFetchAllBlogs>(_onFetchAllBlogs);
     on<BlogFetchMoreBlogs>(_onFetchMoreBlogs);
     on<BlogToggleLike>(_onToggleLike);
+    on<BlogUpdate>(_onBlogUpdate);
+    on<BlogDelete>(_onBlogDelete);
   }
 
   void _onBlogUpload(BlogUpload event, Emitter<BlogState> emit) async {
@@ -100,6 +108,30 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
     res.fold(
           (l) => emit(BlogDisplaySuccess(current.blogs, hasReachedMax: current.hasReachedMax)),
           (_) {},
+    );
+  }
+
+  void _onBlogUpdate(BlogUpdate event, Emitter<BlogState> emit) async {
+    emit(BlogLoading());
+    final res = await updateBlog(UpdateBlogParams(
+      blogId: event.blogId,
+      title: event.title,
+      content: event.content,
+      topics: event.topics,
+      newImage: event.newImage,
+    ));
+    res.fold(
+          (l) => emit(BlogFailure(l.message)),
+          (updated) => emit(BlogUpdateSuccess(updated)),
+    );
+  }
+
+  void _onBlogDelete(BlogDelete event, Emitter<BlogState> emit) async {
+    emit(BlogLoading());
+    final res = await deleteBlog(event.blogId);
+    res.fold(
+          (l) => emit(BlogFailure(l.message)),
+          (_) => emit(BlogDeleteSuccess()),
     );
   }
 }

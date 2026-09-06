@@ -9,6 +9,7 @@ abstract interface class BlogRemoteDataSource{
   Future<String> uploadBlogImage({
     required File image,
     required BlogModel blog,
+    bool upsert = false,
   });
 
   Future<List<BlogModel>> getAllBlogs({
@@ -20,6 +21,18 @@ abstract interface class BlogRemoteDataSource{
 
   /// All blogs a given user has posted, used on the profile page.
   Future<List<BlogModel>> getUserBlogs(String posterId);
+
+  /// Updates a blog's title/content/topics, and its image if `newImage` is
+  /// given. Returns the updated row.
+  Future<BlogModel> updateBlog({
+    required String blogId,
+    required String title,
+    required String content,
+    required List<String> topics,
+    File? newImage,
+  });
+
+  Future<void> deleteBlog(String blogId);
 
 }
 
@@ -46,6 +59,7 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
   Future<String> uploadBlogImage({
     required File image,
     required BlogModel blog,
+    bool upsert = false,
   }) async {
     try {
       // #region debug-point E:upload-image-start
@@ -54,11 +68,12 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
         name: 'blog-upload-web',
       );
       // #endregion
-      /// bucket implemented & call 
+      /// bucket implemented & call - upsert:true lets editing a blog
+      /// overwrite the file already stored at this blog's id
       await supabaseClient.storage.from('blogs_images').upload(
         blog.id,
         image,
-        fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+        fileOptions: FileOptions(cacheControl: '3600', upsert: upsert),
       );
 
       // #region debug-point F:upload-image-success
@@ -205,6 +220,80 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
         });
         return true;
       }
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<BlogModel> updateBlog({
+    required String blogId,
+    required String title,
+    required String content,
+    required List<String> topics,
+    File? newImage,
+  }) async {
+    try {
+      final updateData = <String, dynamic>{
+        'title': title,
+        'content': content,
+        'topics': topics,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      if (newImage != null) {
+        /// overwrite the file already stored at this blog's id (upsert)
+        /// rather than uploading a new one under a new path
+        final placeholder = BlogModel(
+          id: blogId,
+          posterId: '',
+          title: title,
+          content: content,
+          imageUrl: '',
+          topics: topics,
+          updatedAt: DateTime.now(),
+        );
+        final publicUrl = await uploadBlogImage(
+          image: newImage,
+          blog: placeholder,
+          upsert: true,
+        );
+        /// the public URL for a given path never changes, so overwriting the
+        /// file there would otherwise keep serving the old image from any
+        /// HTTP/image cache keyed by that URL - a cache-busting query param
+        /// forces callers to actually refetch it
+        updateData['image_url'] =
+            '$publicUrl?updated=${DateTime.now().millisecondsSinceEpoch}';
+      }
+
+      final updated = await supabaseClient
+          .from('blogs')
+          .update(updateData)
+          .eq('id', blogId)
+          .select();
+
+      if (updated.isEmpty) {
+        throw Exception('Blog not found or you do not have permission to edit it');
+      }
+
+      return BlogModel.fromJson(updated.first);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteBlog(String blogId) async {
+    try {
+      /// best-effort - if the file's already gone (or was never uploaded)
+      /// this shouldn't block deleting the actual blog row
+      try {
+        await supabaseClient.storage.from('blogs_images').remove([blogId]);
+      } catch (_) {}
+
+      /// blog_likes rows for this blog are removed automatically via the
+      /// table's ON DELETE CASCADE foreign key
+      await supabaseClient.from('blogs').delete().eq('id', blogId);
     } catch (e) {
       throw Exception(e.toString());
     }

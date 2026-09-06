@@ -3,6 +3,7 @@ import 'package:blog_app/core/common/Widgets/loader.dart';
 import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app/core/utils/pick_image.dart';
+import 'package:blog_app/features/blog/domain/entites/blog.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
 import 'package:blog_app/features/blog/presentation/widgets/blog_editor.dart';
@@ -13,8 +14,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AddNewBlog extends StatefulWidget {
-  static route() => MaterialPageRoute(builder: (context) => const AddNewBlog());
-  const AddNewBlog({super.key});
+  /// Pass `blog` to open this page in edit mode, pre-filled with its
+  /// content - omit it for the normal "create a new blog" flow.
+  static route({Blog? blog}) =>
+      MaterialPageRoute(builder: (context) => AddNewBlog(existingBlog: blog));
+
+  final Blog? existingBlog;
+
+  const AddNewBlog({super.key, this.existingBlog});
 
   @override
   State<AddNewBlog> createState() => _AddNewBlogState();
@@ -26,8 +33,22 @@ class _AddNewBlogState extends State<AddNewBlog> {
   final formKey = GlobalKey<FormState>();
   List<String> selectedToppics = [];
 
-  /// Made an variable to store the image file and displaying on screen
+  /// A newly picked replacement image, if any - null means "keep whatever
+  /// image the blog already has" while editing.
   File? image;
+
+  bool get isEditing => widget.existingBlog != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final existing = widget.existingBlog;
+    if (existing != null) {
+      titleController.text = existing.title;
+      contentController.text = existing.content;
+      selectedToppics = List.of(existing.topics);
+    }
+  }
 
   /// Made an function to pick image from gallery and return the file, if the user has picked an image, otherwise returns null
   Future<void> selectImage() async {
@@ -41,24 +62,41 @@ class _AddNewBlogState extends State<AddNewBlog> {
     }
   }
 
-  /// Created an function for uploading blog
-  void UploadBlog(){
-      /// Added validation for blog text and info also the topic selection
+  /// Created an function for uploading/updating the blog
+  void submit(){
+      /// Added validation for blog text and info also the topic selection.
+      /// A picked image is only required when creating - editing can keep
+      /// the blog's existing image if the user didn't pick a new one.
+      final hasImage = image != null || isEditing;
       if(
       formKey.currentState!.validate()
           && selectedToppics.isNotEmpty
-          && image != null) {
-        /// passing the data after validation
-        /// state is taken from user logged in
-        final posterId = (context.read<AppUserCubit>().state as AppUserLoggedIn).user.id;
-        context.read<BlogBloc>().add(
-          BlogUpload(
-              posterId: posterId,
-              title: titleController.text.trim(),
-              content: contentController.text.trim(),
-              image: image!,
-              topics: selectedToppics),
-        );
+          && hasImage) {
+        final title = titleController.text.trim();
+        final content = contentController.text.trim();
+
+        if (isEditing) {
+          context.read<BlogBloc>().add(
+            BlogUpdate(
+                blogId: widget.existingBlog!.id,
+                title: title,
+                content: content,
+                topics: selectedToppics,
+                newImage: image),
+          );
+        } else {
+          /// passing the data after validation
+          /// state is taken from user logged in
+          final posterId = (context.read<AppUserCubit>().state as AppUserLoggedIn).user.id;
+          context.read<BlogBloc>().add(
+            BlogUpload(
+                posterId: posterId,
+                title: title,
+                content: content,
+                image: image!,
+                topics: selectedToppics),
+          );
+        }
       };
   }
 
@@ -72,11 +110,12 @@ class _AddNewBlogState extends State<AddNewBlog> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Text(isEditing ? 'Edit Blog' : 'Add New Blog'),
         actions: [
           IconButton(
             onPressed: () {
               /// called the function which consists of function..
-              UploadBlog();
+              submit();
             },
             icon: const Icon(Icons.done_rounded),
           ),
@@ -96,6 +135,11 @@ class _AddNewBlogState extends State<AddNewBlog> {
                 BlogPage.route(),
                 (route) => false,
             );
+          }
+          else if(state is BlogUpdateSuccess){
+            /// hand the updated blog back to whoever pushed this page
+            /// (BlogDetailpage) so it can refresh without a re-fetch
+            Navigator.pop(context, state.blog);
           }
         },
         builder: (context, state) {
@@ -136,22 +180,32 @@ class _AddNewBlogState extends State<AddNewBlog> {
                                             fit: BoxFit.cover,
                                           ),
                                   )
-                                : const Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(Icons.folder_open_rounded, size: 50),
-                                      SizedBox(height: 12),
-                                      Text(
-                                        'Select Image',
-                                        style: TextStyle(fontSize: 15),
-                                      ),
-                                    ],
-                                  ),
+                                : (isEditing && widget.existingBlog!.imageUrl.isNotEmpty
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network(
+                                          widget.existingBlog!.imageUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) =>
+                                              const Center(child: Text('Tap to replace image')),
+                                        ),
+                                      )
+                                    : const Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.folder_open_rounded, size: 50),
+                                          SizedBox(height: 12),
+                                          Text(
+                                            'Select Image',
+                                            style: TextStyle(fontSize: 15),
+                                          ),
+                                        ],
+                                      )),
                           ),
                         ),
                       ),
                       const SizedBox(height: 20),
-                  
+
                       /// Businsess, Tech, Pro options
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
@@ -189,8 +243,8 @@ class _AddNewBlogState extends State<AddNewBlog> {
                                               AppPalette.gradient1,
                                             )
                                           : null,
-                                      side: selectedToppics.contains(e) 
-                                        ? null 
+                                      side: selectedToppics.contains(e)
+                                        ? null
                                         : const BorderSide(
                                         color: AppPalette.borderColor,
                                       ),
@@ -206,7 +260,7 @@ class _AddNewBlogState extends State<AddNewBlog> {
                           hintText: 'Blog Title'
                       ),
                       const SizedBox(height: 15),
-                  
+
                       BlogEditor(
                         controller: contentController,
                         hintText: 'Blog Content',

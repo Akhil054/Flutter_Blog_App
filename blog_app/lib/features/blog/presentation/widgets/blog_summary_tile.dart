@@ -11,7 +11,11 @@ import 'blog_like_badge.dart';
 class BlogSummaryTile extends StatelessWidget {
   final Blog blog;
 
-  const BlogSummaryTile({super.key, required this.blog});
+  /// Called after this blog is edited or deleted from the detail page, so
+  /// the list showing this tile (the profile page) can refresh itself.
+  final VoidCallback? onChanged;
+
+  const BlogSummaryTile({super.key, required this.blog, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +46,10 @@ class BlogSummaryTile extends StatelessWidget {
           isLiked: blog.isLiked,
           color: textColor ?? Colors.grey,
         ),
-        onTap: () => Navigator.push(context, BlogDetailpage.route(blog)),
+        onTap: () => Navigator.push(
+          context,
+          BlogDetailpage.route(blog, onChanged: onChanged),
+        ),
       ),
     );
   }

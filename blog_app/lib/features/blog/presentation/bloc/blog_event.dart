@@ -30,3 +30,25 @@ final class BlogToggleLike extends BlogEvent {
 
   BlogToggleLike({required this.blogId});
 }
+
+final class BlogUpdate extends BlogEvent {
+  final String blogId;
+  final String title;
+  final String content;
+  final List<String> topics;
+  final File? newImage;
+
+  BlogUpdate({
+    required this.blogId,
+    required this.title,
+    required this.content,
+    required this.topics,
+    this.newImage,
+  });
+}
+
+final class BlogDelete extends BlogEvent {
+  final String blogId;
+
+  BlogDelete({required this.blogId});
+}
