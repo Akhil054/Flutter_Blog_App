@@ -1,5 +1,6 @@
 import 'package:blog_app/features/blog/domain/entites/blog.dart';
 import 'package:blog_app/features/blog/presentation/pages/blog_detailPage.dart';
+import 'package:blog_app/features/blog/presentation/widgets/blog_like_badge.dart';
 import 'package:blog_app/theme/pallete.dart';
 import 'package:flutter/material.dart';
 
@@ -79,32 +80,10 @@ class BlogCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    InkWell(
-                      borderRadius: BorderRadius.circular(20),
+                    BlogLikeBadge(
+                      likesCount: blog.likesCount,
+                      isLiked: blog.isLiked,
                       onTap: onLikeTap,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              blog.isLiked ? Icons.favorite : Icons.favorite_border,
-                              size: 18,
-                              color: blog.isLiked
-                                  ? Colors.redAccent
-                                  : AppPalette.whiteColor,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${blog.likesCount}',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppPalette.whiteColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                     Text(
                       blog.topics.isNotEmpty ? blog.topics.first : '',

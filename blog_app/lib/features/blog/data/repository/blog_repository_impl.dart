@@ -103,13 +103,13 @@ class BlogRepositoryImpl implements BlogRepository{
   }
 
   @override
-  Future<Either<Failure, int>> getUserBlogsCount(String posterId) async {
+  Future<Either<Failure, List<Blog>>> getUserBlogs(String posterId) async {
     try {
       if(!await connectionChecker.isConnected){
         return left(Failure(Constants.noConnectionMessage));
       }
-      final count = await blogRemoteDataSource.getUserBlogsCount(posterId);
-      return right(count);
+      final blogs = await blogRemoteDataSource.getUserBlogs(posterId);
+      return right(blogs);
     } on ServerException catch (e) {
       return left(Failure(e.message));
     } catch (e) {

@@ -7,6 +7,7 @@ import '../../../../core/common/entites/user.dart';
 import '../../../../init_depdencies.dart';
 import '../../../../theme/pallete.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
+import '../../../blog/presentation/widgets/blog_summary_tile.dart';
 import '../cubit/profile_cubit.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -88,6 +89,18 @@ class ProfilePage extends StatelessWidget {
                 const SizedBox(height: 28),
                 _BlogsPostedCard(state: state, posterId: user.id),
                 const SizedBox(height: 32),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Your blogs',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _YourBlogsSection(state: state),
+                const SizedBox(height: 32),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(
@@ -97,10 +110,6 @@ class ProfilePage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () {
-                      /// Signs out of supabase & flips AppUserCubit to
-                      /// logged-out; the BlocListener<AuthBloc, AuthState> in
-                      /// build() reacts to the resulting AuthInitial by
-                      /// popping this page so LoginPage becomes visible.
                       context.read<AuthBloc>().add(AuthLogOut());
                     },
                     icon: const Icon(Icons.logout_outlined),
@@ -136,7 +145,7 @@ class _BlogsPostedCardState extends State<_BlogsPostedCard> {
   @override
   void initState() {
     super.initState();
-    context.read<ProfileCubit>().loadBlogsCount(widget.posterId);
+    context.read<ProfileCubit>().loadUserBlogs(widget.posterId);
   }
 
   @override
@@ -172,6 +181,50 @@ class _BlogsPostedCardState extends State<_BlogsPostedCard> {
           const Text('Blogs posted'),
         ],
       ),
+    );
+  }
+}
+
+/// The list of blogs the current user has posted, each shown via the
+/// compact [BlogSummaryTile] (title + like count only - no image/author,
+/// since the author is always this same user here).
+class _YourBlogsSection extends StatelessWidget {
+  final ProfileState state;
+
+  const _YourBlogsSection({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    if (state is ProfileInitial || state is ProfileLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            height: 24,
+            width: 24,
+            child: CircularProgressIndicator(strokeWidth: 3),
+          ),
+        ),
+      );
+    }
+
+    if (state is! ProfileLoaded) return const SizedBox.shrink();
+
+    final blogs = (state as ProfileLoaded).blogs;
+    if (blogs.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Text("You haven't posted any blogs yet."),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var i = 0; i < blogs.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          BlogSummaryTile(blog: blogs[i]),
+        ],
+      ],
     );
   }
 }

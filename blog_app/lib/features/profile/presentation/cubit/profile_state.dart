@@ -8,9 +8,11 @@ final class ProfileInitial extends ProfileState {}
 final class ProfileLoading extends ProfileState {}
 
 final class ProfileLoaded extends ProfileState {
-  final int blogsCount;
+  final List<Blog> blogs;
 
-  ProfileLoaded(this.blogsCount);
+  ProfileLoaded(this.blogs);
+
+  int get blogsCount => blogs.length;
 }
 
 final class ProfileError extends ProfileState {

@@ -18,8 +18,8 @@ abstract interface class BlogRemoteDataSource{
 
   Future<bool> toggleLikeBlog(String blogId);
 
-  /// Number of blogs a given user has posted, used on the profile page.
-  Future<int> getUserBlogsCount(String posterId);
+  /// All blogs a given user has posted, used on the profile page.
+  Future<List<BlogModel>> getUserBlogs(String posterId);
 
 }
 
@@ -112,34 +112,64 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
           if (user['id'] != null) user['id'] as String: (user['name'] as String?) ?? 'Anonymous',
       };
 
-      /// fetching likes for this page of blogs so we can show a count and
-      /// whether the current user has liked each one
-      final blogIds = blogModels.map((blog) => blog.id).toList();
-      final likeRows = await supabaseClient
-          .from('blog_likes')
-          .select('blog_id, user_id')
-          .inFilter('blog_id', blogIds);
+      final withLikes = await _attachLikes(blogModels);
 
-      final currentUserId = supabaseClient.auth.currentUser?.id;
-      final likeCountByBlogId = <String, int>{};
-      final likedBlogIds = <String>{};
-      for (final row in likeRows) {
-        final blogId = row['blog_id'] as String?;
-        if (blogId == null) continue;
-        likeCountByBlogId[blogId] = (likeCountByBlogId[blogId] ?? 0) + 1;
-        if (row['user_id'] == currentUserId) likedBlogIds.add(blogId);
-      }
-
-      return blogModels
+      return withLikes
           .map((blog) => blog.copyWith(
                 author: nameByPosterId[blog.posterId] ?? 'Anonymous',
-                likesCount: likeCountByBlogId[blog.id] ?? 0,
-                isLiked: likedBlogIds.contains(blog.id),
               ))
           .toList();
     } catch (e) {
       throw Exception(e.toString());
     }
+  }
+
+  @override
+  Future<List<BlogModel>> getUserBlogs(String posterId) async {
+    try {
+      final blogs = await supabaseClient
+          .from('blogs')
+          .select()
+          .eq('poster_id', posterId)
+          .order('updated_at', ascending: false);
+
+      final blogModels = blogs.map((blog) => BlogModel.fromJson(blog)).toList();
+      if (blogModels.isEmpty) return blogModels;
+
+      /// the poster is already known (it's the current user), so skip the
+      /// profiles join that getAllBlogs needs and just attach likes
+      return _attachLikes(blogModels);
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  /// fetches likes for the given blogs and returns them with `likesCount`
+  /// and `isLiked` (for the current user) filled in; shared by getAllBlogs
+  /// and getUserBlogs so the like-aggregation logic lives in one place
+  Future<List<BlogModel>> _attachLikes(List<BlogModel> blogModels) async {
+    final blogIds = blogModels.map((blog) => blog.id).toList();
+    final likeRows = await supabaseClient
+        .from('blog_likes')
+        .select('blog_id, user_id')
+        .inFilter('blog_id', blogIds);
+
+    final currentUserId = supabaseClient.auth.currentUser?.id;
+    final likeCountByBlogId = <String, int>{};
+    final likedBlogIds = <String>{};
+    for (final row in likeRows) {
+      final blogId = row['blog_id'] as String?;
+      if (blogId == null) continue;
+      likeCountByBlogId[blogId] = (likeCountByBlogId[blogId] ?? 0) + 1;
+      if (row['user_id'] == currentUserId) likedBlogIds.add(blogId);
+    }
+
+    return blogModels
+        .map((blog) => blog.copyWith(
+              likesCount: likeCountByBlogId[blog.id] ?? 0,
+              isLiked: likedBlogIds.contains(blog.id),
+            ))
+        .toList();
   }
 
   @override
@@ -173,15 +203,4 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
     }
   }
 
-  @override
-  Future<int> getUserBlogsCount(String posterId) async {
-    try {
-      return await supabaseClient
-          .from('blogs')
-          .count()
-          .eq('poster_id', posterId);
-    } catch (e) {
-      throw Exception(e.toString());
-    }
-  }
 }
