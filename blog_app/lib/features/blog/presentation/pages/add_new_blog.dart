@@ -161,6 +161,10 @@ class _AddNewBlogState extends State<AddNewBlog> {
                             'Business',
                             'Programming',
                             'Entertainment',
+                            'Sports',
+                            'Food',
+                            'Travel',
+                            'Anonymous',
                           ]
                           /// Passing children to row i.e making it Iterable
                               .map(
