@@ -3,6 +3,7 @@ import 'package:blog_app/theme/pallete.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/common/Widgets/loader.dart';
+import '../../../../core/common/Widgets/show_error_dialog.dart';
 import '../bloc/auth_bloc.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/auth_field.dart';
@@ -52,9 +53,10 @@ class _SignUpPageState extends State<SignUpPage> {
         padding: const EdgeInsets.all(10.0),
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            /// If its fail to  verify it shows an bottom snack bar
+            /// show a popup dialog for failures, same as login_page.dart,
+            /// instead of a bottom snack bar
             if(state is AuthFailure){
-              showSnackBar(context, state.message);
+              showErrorDialog(context, state.message, title: 'Sign up failed');
             }
             /// Account created successfully - the user is deliberately NOT
             /// logged in yet (see AuthBloc._onAuthSignUp), so send them back

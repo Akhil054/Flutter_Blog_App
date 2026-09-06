@@ -43,14 +43,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       }
 
-      /// UserLoggedIn event is called when the app is opened and check if the user is already logged in or not
+      /// UserLoggedIn event is called when the app is opened and check if the user is already logged in or not.
+      /// This is a silent background check, not a user-initiated login
+      /// attempt - having no session (a fresh install, or after logout) is
+      /// the normal case here, not an error, so it must NOT emit
+      /// AuthFailure: LoginPage's listener pops an error dialog on any
+      /// AuthFailure, which would otherwise greet a logged-out user with a
+      /// spurious "not logged in" popup the instant the app opens.
       void _isUserLoggedIn(
           AuthIsUserLoggedIn event,
           Emitter<AuthState> emit
           ) async{
         /// calling current user class
         final res = await  _currentUser(NoParams());
-        res.fold((l) => emit(AuthFailure(l.message)),
+        res.fold((l) => emit(AuthInitial()),
               (r) => _emitAuthSuccess(r, emit),
 
         );

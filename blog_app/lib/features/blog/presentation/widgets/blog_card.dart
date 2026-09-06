@@ -33,6 +33,23 @@ class BlogCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                /// Display the blog title
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    blog.title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppPalette.whiteColor,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
+                const SizedBox(height: 12),
+
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
@@ -45,27 +62,7 @@ class BlogCard extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 12),
-
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    blog.title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      /// explicit, not inherited: the card's own background
-                      /// (AppPalette.blogCardColors) is always dark regardless
-                      /// of whether the app is in light or dark theme, so the
-                      /// title needs to stay white either way rather than
-                      /// following the ambient theme's default text color
-                      color: AppPalette.whiteColor,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 10),
 
                 // Display the author name
                 Align(
@@ -73,7 +70,7 @@ class BlogCard extends StatelessWidget {
                   child: Text(
                     'by ${blog.author}',
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       fontStyle: FontStyle.italic,
                       color: AppPalette.whiteColor,
                     ),
@@ -83,6 +80,7 @@ class BlogCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
 
+                /// Show the like badge and the first topic of the blog
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -94,7 +92,7 @@ class BlogCard extends StatelessWidget {
                     Text(
                       blog.topics.isNotEmpty ? blog.topics.first : '',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 16,
                         color: AppPalette.whiteColor,
                       ),
                     ),
