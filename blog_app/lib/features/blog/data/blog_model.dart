@@ -16,6 +16,7 @@ class BlogModel extends Blog{
     super.author,
     super.likesCount,
     super.isLiked,
+    super.summary,
   });
 
   Map<String, dynamic> toJson() {
@@ -27,6 +28,7 @@ class BlogModel extends Blog{
       'image_url': imageUrl,
       'topics': topics,
       'updated_at': updatedAt.toIso8601String(),
+      'summary': summary,
     };
   }
 
@@ -41,6 +43,7 @@ class BlogModel extends Blog{
       updatedAt: map['updated_at'] == null
           ? DateTime.now()
           : DateTime.parse(map['updated_at'] as String),
+      summary: map['summary'] as String?,
     );
   }
 
@@ -56,6 +59,7 @@ class BlogModel extends Blog{
     String? author,
     int? likesCount,
     bool? isLiked,
+    String? summary,
   }) {
     return BlogModel(
       id: id ?? this.id,
@@ -68,6 +72,7 @@ class BlogModel extends Blog{
       author: author ?? this.author,
       likesCount: likesCount ?? this.likesCount,
       isLiked: isLiked ?? this.isLiked,
+      summary: summary ?? this.summary,
     );
   }
 

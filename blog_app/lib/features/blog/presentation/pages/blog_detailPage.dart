@@ -1,6 +1,7 @@
 import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app/core/common/cubits/theme/theme_cubit.dart';
+import 'package:blog_app/features/ai/presentation/cubit/ai_assist_cubit.dart';
 import 'package:blog_app/features/blog/domain/entites/blog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -34,6 +35,20 @@ class _BlogDetailpageState extends State<BlogDetailpage> {
   /// feed excludes your own posts), so there'd otherwise be nothing to
   /// refresh this page's display with.
   Blog? _localOverride;
+
+  /// A freshly-generated summary from tapping "Summarize" on this page,
+  /// taking priority over the blog's stored `summary` (if any) once set.
+  String? _generatedSummary;
+
+  @override
+  void initState() {
+    super.initState();
+    /// AiAssistCubit is a single shared instance across the app (also used
+    /// by AddNewBlog) - reset it so a leftover state from wherever this
+    /// page was navigated from doesn't flash a stale summary/suggestion
+    /// card here.
+    context.read<AiAssistCubit>().reset();
+  }
 
   Future<void> _delete(BuildContext context, Blog blog) async {
     final confirmed = await showDialog<bool>(
@@ -190,6 +205,66 @@ class _BlogDetailpageState extends State<BlogDetailpage> {
               ),
 
               const SizedBox(height: 20.0),
+              /// added ai summarise part 
+              BlocConsumer<AiAssistCubit, AiAssistState>(
+                listener: (context, aiState) {
+                  if (aiState is AiAssistFailure) {
+                    showSnackBar(context, aiState.error);
+                  } else if (aiState is AiSummaryReady) {
+                    setState(() => _generatedSummary = aiState.summary);
+                  }
+                },
+                builder: (context, aiState) {
+                  final isAiLoading = aiState is AiAssistLoading;
+                  final canSummarize = blog.content.trim().length >= 20;
+                  final summaryToShow = _generatedSummary ?? blog.summary;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: (isAiLoading || !canSummarize)
+                              ? null
+                              : () => context
+                                  .read<AiAssistCubit>()
+                                  .summarize(blog.content),
+                          icon: const Icon(Icons.summarize_outlined),
+                          label: Text(
+                            summaryToShow == null ? 'Summarize' : 'Regenerate summary',
+                          ),
+                        ),
+                      ),
+                      if (isAiLoading) const LinearProgressIndicator(),
+                      if (summaryToShow != null) ...[
+                        const SizedBox(height: 8.0),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'AI Summary',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).textTheme.bodyMedium?.color,
+                                  ),
+                                ),
+                                const SizedBox(height: 6.0),
+                                Text(summaryToShow),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 12.0),
+                    ],
+                  );
+                },
+              ),
+
               Text(
                 blog.content,
                 style: const TextStyle(fontSize: 16.0),

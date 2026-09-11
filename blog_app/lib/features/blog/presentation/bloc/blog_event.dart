@@ -9,6 +9,7 @@ final class BlogUpload extends BlogEvent {
   final String content;
   final File image;
   final List<String> topics;
+  final String? summary;
 
   BlogUpload({
     required this.posterId,
@@ -16,6 +17,7 @@ final class BlogUpload extends BlogEvent {
     required this.content,
     required this.image,
     required this.topics,
+    this.summary,
   });
 
 }

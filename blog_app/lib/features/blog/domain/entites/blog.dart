@@ -13,6 +13,7 @@ class Blog {
   final String author;
   final int likesCount;
   final bool isLiked;
+  final String? summary;
 
   Blog({
     required this.id,
@@ -25,6 +26,7 @@ class Blog {
     this.author = 'Anonymous',
     this.likesCount = 0,
     this.isLiked = false,
+    this.summary,
   });
 
   Blog copyWith({
@@ -38,6 +40,7 @@ class Blog {
     String? author,
     int? likesCount,
     bool? isLiked,
+    String? summary,
   }) {
     return Blog(
       id: id ?? this.id,
@@ -50,6 +53,7 @@ class Blog {
       author: author ?? this.author,
       likesCount: likesCount ?? this.likesCount,
       isLiked: isLiked ?? this.isLiked,
+      summary: summary ?? this.summary,
     );
   }
 
@@ -65,6 +69,7 @@ class Blog {
       'author': author,
       'likesCount': likesCount,
       'isLiked': isLiked,
+      'summary': summary,
     };
   }
 }

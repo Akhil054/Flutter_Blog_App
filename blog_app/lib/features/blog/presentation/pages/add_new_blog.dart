@@ -3,6 +3,7 @@ import 'package:blog_app/core/common/Widgets/loader.dart';
 import 'package:blog_app/core/common/Widgets/show_snakbar.dart';
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app/core/utils/pick_image.dart';
+import 'package:blog_app/features/ai/presentation/cubit/ai_assist_cubit.dart';
 import 'package:blog_app/features/blog/domain/entites/blog.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/features/blog/presentation/pages/blog_page.dart';
@@ -33,15 +34,35 @@ class _AddNewBlogState extends State<AddNewBlog> {
   final formKey = GlobalKey<FormState>();
   List<String> selectedToppics = [];
 
+  final topics = const [
+    'Technology',
+    'Business',
+    'Programming',
+    'Entertainment',
+    'Sports',
+    'Food',
+    'Travel',
+    'Anonymous',
+  ];
+
   /// A newly picked replacement image, if any - null means "keep whatever
   /// image the blog already has" while editing.
   File? image;
+
+  /// The AI-generated summary for this blog, if the user has requested one -
+  /// carried along to be persisted alongside the blog on submit.
+  String? aiSummary;
 
   bool get isEditing => widget.existingBlog != null;
 
   @override
   void initState() {
     super.initState();
+    /// AiAssistCubit is a single shared instance across the app (also used
+    /// by BlogDetailpage) - reset it so a leftover state from wherever this
+    /// page was navigated from doesn't flash a stale summary/suggestion
+    /// card here.
+    context.read<AiAssistCubit>().reset();
     final existing = widget.existingBlog;
     if (existing != null) {
       titleController.text = existing.title;
@@ -94,7 +115,8 @@ class _AddNewBlogState extends State<AddNewBlog> {
                 title: title,
                 content: content,
                 image: image!,
-                topics: selectedToppics),
+                topics: selectedToppics,
+                summary: aiSummary),
           );
         }
       };
@@ -102,9 +124,9 @@ class _AddNewBlogState extends State<AddNewBlog> {
 
   @override
   void dispose() {
-    super.dispose();
     titleController.dispose();
     contentController.dispose();
+    super.dispose();
   }
   @override
   Widget build(BuildContext context) {
@@ -210,16 +232,7 @@ class _AddNewBlogState extends State<AddNewBlog> {
                       SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
-                          children: [
-                            'Technology',
-                            'Business',
-                            'Programming',
-                            'Entertainment',
-                            'Sports',
-                            'Food',
-                            'Travel',
-                            'Anonymous',
-                          ]
+                          children: topics
                           /// Passing children to row i.e making it Iterable
                               .map(
                                 (e) => Padding(
@@ -239,7 +252,7 @@ class _AddNewBlogState extends State<AddNewBlog> {
                                     child: Chip(
                                       label: Text(e),
                                       color: selectedToppics.contains(e)
-                                          ? const MaterialStatePropertyAll(
+                                          ? const WidgetStatePropertyAll(
                                               AppPalette.gradient1,
                                             )
                                           : null,
@@ -255,6 +268,98 @@ class _AddNewBlogState extends State<AddNewBlog> {
                         ),
                       ),
                       const SizedBox(height: 20),
+
+                      BlocConsumer<AiAssistCubit, AiAssistState>(
+                        listener: (context, aiState) {
+                          if (aiState is AiAssistFailure) {
+                            showSnackBar(context, aiState.error);
+                          } else if (aiState is AiSummaryReady) {
+                            setState(() {
+                              aiSummary = aiState.summary;
+                            });
+                          } else if (aiState is AiSuggestionReady) {
+                            setState(() {
+                              aiSummary = aiState.suggestion.summary;
+                              if (aiState.suggestion.suggestedTitle.isNotEmpty) {
+                                titleController.text = aiState.suggestion.suggestedTitle;
+                              }
+                              for (final topic in aiState.suggestion.suggestedTopics) {
+                                if (topics.contains(topic) && !selectedToppics.contains(topic)) {
+                                  selectedToppics.add(topic);
+                                }
+                              }
+                            });
+                          }
+                        },
+                        builder: (context, aiState) {
+                          final isAiLoading = aiState is AiAssistLoading;
+                          final canRunAi = contentController.text.trim().length >= 20;
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: (isAiLoading || !canRunAi)
+                                          ? null
+                                          : () {
+                                              context
+                                                  .read<AiAssistCubit>()
+                                                  .summarize(contentController.text.trim());
+                                            },
+                                      icon: const Icon(Icons.summarize_outlined),
+                                      label: const Text('Summarize'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: (isAiLoading || !canRunAi)
+                                          ? null
+                                          : () {
+                                              context.read<AiAssistCubit>().suggestMetadata(
+                                                    title: titleController.text.trim(),
+                                                    content: contentController.text.trim(),
+                                                    allowedTopics: topics,
+                                                  );
+                                            },
+                                      icon: const Icon(Icons.auto_awesome_outlined),
+                                      label: const Text('Suggest title & topics'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (isAiLoading) ...[
+                                const SizedBox(height: 10),
+                                const LinearProgressIndicator(),
+                              ],
+                              if (aiSummary != null) ...[
+                                const SizedBox(height: 10),
+                                Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'AI Summary',
+                                          style: TextStyle(fontWeight: FontWeight.bold),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(aiSummary!),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+
                       BlogEditor(
                           controller: titleController,
                           hintText: 'Blog Title'
@@ -264,6 +369,7 @@ class _AddNewBlogState extends State<AddNewBlog> {
                       BlogEditor(
                         controller: contentController,
                         hintText: 'Blog Content',
+                        onChanged: (_) => setState(() {}),
                       ),
                     ],
                   ),

@@ -63,8 +63,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     
     void _onAuthSignUp(AuthSignUp event, Emitter<AuthState> emit) async {
-      print('DEBUG: AuthSignUp event received: ${event.email}');
-
       /// auth sign up event recieve then call the usecase
       final res = await _userSignUp(
         UserSignUpParams(
@@ -73,14 +71,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           name: event.name,
         ),
       );
-      print('DEBUG: signup result: $res');
       await res.fold(
         (failure) async {
-          print('DEBUG: signup FAILED: ${failure.message}');
           emit(AuthFailure(failure.message));
         },
         (user) async {
-          print('DEBUG: signup SUCCESS uid=$user');
           /// Sign up must NOT log the user straight into the app - Supabase's
           /// signUp() call opens a live session on the client as soon as it
           /// returns (when email confirmation is off), so sign that session
@@ -95,18 +90,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
 
     void _onAuthLogin(AuthLogin event, Emitter<AuthState> emit) async {
-      print('DEBUG: AuthLogin event received: ${event.email}');
-
       /// auth login event recieve then call the usecase
       final res = await _userLogin(UserLoginParams(
         email: event.email,
         password: event.password
       ),);
       res.fold(
-        (l) {
-          print('DEBUG: login FAILED: ${l.message}');
-          emit(AuthFailure(l.message));
-        },
+        (l) => emit(AuthFailure(l.message)),
         (r) => _emitAuthSuccess(r, emit),
       );
     }

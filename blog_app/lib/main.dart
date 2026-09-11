@@ -1,6 +1,7 @@
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app/core/common/cubits/theme/theme_cubit.dart';
 import 'package:blog_app/core/services/notification_service.dart';
+import 'package:blog_app/features/ai/presentation/cubit/ai_assist_cubit.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
 import 'package:blog_app/init_depdencies.dart';
 import 'package:blog_app/theme/theme.dart';
@@ -45,6 +46,9 @@ void main() async {
         ),
         BlocProvider(
           create: (_) => serviceLocator<BlogBloc>(),
+        ),
+        BlocProvider(
+          create: (_) => serviceLocator<AiAssistCubit>(),
         ),
         BlocProvider(
           create: (_) => ThemeCubit(savedThemeMode),

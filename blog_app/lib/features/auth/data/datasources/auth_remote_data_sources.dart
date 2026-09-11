@@ -71,7 +71,6 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
   }) async {
   /// When an above method is called it should create an user in supbase
     try {
-      print('DEBUG: calling supabase signUp with email=$email');
       /// written as final response coz signUp is Future type
       final response = await supabaseClient.auth.signUp(
         password: password,
@@ -81,7 +80,6 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
           'name': name,
         },
       );
-      print('DEBUG: supabase response user=${response.user?.id}');
       if (response.user == null) {
         /// Custom exception
         throw const ServerException('Could not create your account. Please try again.');
@@ -95,23 +93,18 @@ class AuthRemoteDataSourcesImpl implements AuthRemoteDataSources {
       /// it would otherwise show "Something went wrong" for an account
       /// that was actually created successfully.
       try {
-        print('DEBUG: inserting into users table');
         await supabaseClient.from('users').insert({
           'id': response.user!.id,
           'name': name,
           'email': email,
         });
-        print('DEBUG: insert into users table success');
-      } catch (e) {
-        print('DEBUG: insert into users table FAILED (ignored): $e');
-      }
+      } catch (_) {}
 
       /// not null returning the user id..
       return UserModel.fromJson(response.user!.toJson());
     } on ServerException {
       rethrow;
     } catch (e) {
-      print('DEBUG: signup exception: $e');
       /// Map raw errors (AuthApiException etc.) to a user friendly message
       throw ServerException(authErrorMessage(e));
     }

@@ -26,8 +26,9 @@ class BlogRepositoryImpl implements BlogRepository{
     required File image, 
     required String title, 
     required String content, 
-    required String posterId, 
+    required String posterId,
     required List<String> topics,
+    String? summary,
   })  async {
     try{
       if(!await connectionChecker.isConnected){
@@ -43,6 +44,7 @@ class BlogRepositoryImpl implements BlogRepository{
         imageUrl: '',
         topics: topics,
         updatedAt: DateTime.now(),
+        summary: summary,
       );
 
       /// access to db & call uploadImage function & saving the imageURL and possing to blog Model so its get uploaded to db
@@ -63,10 +65,9 @@ class BlogRepositoryImpl implements BlogRepository{
     }
     on ServerException catch (e){
       return left(Failure(e.message));
+    } catch (e) {
+      return left(Failure(e.toString()));
     }
-
-
-
   }
 
   @override

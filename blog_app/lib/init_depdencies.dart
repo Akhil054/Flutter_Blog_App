@@ -1,5 +1,11 @@
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app/core/network/connection_checker.dart';
+import 'package:blog_app/features/ai/data/datasources/ai_remote_data_source.dart';
+import 'package:blog_app/features/ai/data/repository/ai_repository_impl.dart';
+import 'package:blog_app/features/ai/domain/repository/ai_repository.dart';
+import 'package:blog_app/features/ai/domain/usecases/suggest_metadata.dart';
+import 'package:blog_app/features/ai/domain/usecases/summarize_content.dart';
+import 'package:blog_app/features/ai/presentation/cubit/ai_assist_cubit.dart';
 import 'package:blog_app/features/blog/data/datasources/blog_remote_data_source.dart';
 import 'package:blog_app/features/blog/data/repository/blog_repository_impl.dart';
 import 'package:blog_app/features/blog/domain/repository/blog_repository.dart';
@@ -55,6 +61,8 @@ Future<void> initDependencies() async{
   _initAuth();
 
   _initBlog();
+
+  _initAi();
 
 }
 
@@ -175,4 +183,34 @@ void _initBlog() {
       getUserBlogs: serviceLocator(),
     ),
   );
+}
+
+void _initAi() {
+  serviceLocator
+    ..registerFactory<AiRemoteDataSource>(
+      () => AiRemoteDataSourceImpl(
+        supabaseClient: serviceLocator(),
+      ),
+    )
+    ..registerFactory<AiRepository>(
+      () => AiRepositoryImpl(
+        serviceLocator(),
+      ),
+    )
+    ..registerFactory(
+      () => SummarizeContent(
+        serviceLocator(),
+      ),
+    )
+    ..registerFactory(
+      () => SuggestMetadata(
+        serviceLocator(),
+      ),
+    )
+    ..registerLazySingleton(
+      () => AiAssistCubit(
+        summarizeContent: serviceLocator(),
+        suggestMetadata: serviceLocator(),
+      ),
+    );
 }
