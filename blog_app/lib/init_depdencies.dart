@@ -11,11 +11,17 @@ import 'package:blog_app/features/blog/data/repository/blog_repository_impl.dart
 import 'package:blog_app/features/blog/domain/repository/blog_repository.dart';
 import 'package:blog_app/features/blog/domain/useCases/delete_blog.dart';
 import 'package:blog_app/features/blog/domain/useCases/get_all_blogs.dart';
+import 'package:blog_app/features/blog/domain/useCases/get_blog_by_id.dart';
 import 'package:blog_app/features/blog/domain/useCases/get_user_blogs.dart';
 import 'package:blog_app/features/blog/domain/useCases/toggle_like_blog.dart';
 import 'package:blog_app/features/blog/domain/useCases/update_blog.dart';
 import 'package:blog_app/features/blog/domain/useCases/upload_blog.dart';
+import 'package:blog_app/features/blog/domain/useCases/watch_new_blogs.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
+import 'package:blog_app/features/notifications/data/datasources/notification_remote_data_source.dart';
+import 'package:blog_app/features/notifications/data/repository/notification_repository_impl.dart';
+import 'package:blog_app/features/notifications/domain/repository/notification_repository.dart';
+import 'package:blog_app/features/notifications/presentation/cubit/notification_cubit.dart';
 import 'package:blog_app/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:blog_app/repository/auth_repository.dart';
 import 'package:blog_app/secret/app_secrets.dart';
@@ -63,6 +69,8 @@ Future<void> initDependencies() async{
   _initBlog();
 
   _initAi();
+
+  _initNotifications();
 
 }
 
@@ -165,6 +173,16 @@ void _initBlog() {
         serviceLocator(),
       ),
     )
+    ..registerFactory(
+      () => GetBlogById(
+        serviceLocator(),
+      ),
+    )
+    ..registerFactory(
+      () => WatchNewBlogs(
+        serviceLocator(),
+      ),
+    )
     // Bloc
     ..registerLazySingleton(
       () => BlogBloc(
@@ -173,6 +191,8 @@ void _initBlog() {
         toggleLikeBlog: serviceLocator(),
         updateBlog: serviceLocator(),
         deleteBlog: serviceLocator(),
+        getBlogById: serviceLocator(),
+        watchNewBlogs: serviceLocator(),
       ),
     );
 
@@ -211,6 +231,27 @@ void _initAi() {
       () => AiAssistCubit(
         summarizeContent: serviceLocator(),
         suggestMetadata: serviceLocator(),
+      ),
+    );
+}
+
+void _initNotifications() {
+  serviceLocator
+    ..registerFactory<NotificationRemoteDataSource>(
+      () => NotificationRemoteDataSourceImpl(
+        supabaseClient: serviceLocator(),
+      ),
+    )
+    ..registerFactory<NotificationRepository>(
+      () => NotificationRepositoryImpl(
+        serviceLocator(),
+        serviceLocator(),    //// ConnectionChecker
+      ),
+    )
+    /// app-wide (bell badge on the feed + the notifications page)
+    ..registerLazySingleton(
+      () => NotificationCubit(
+        repository: serviceLocator(),
       ),
     );
 }

@@ -1,12 +1,15 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
 import '../../domain/entites/blog.dart';
 import '../../domain/useCases/delete_blog.dart';
 import '../../domain/useCases/get_all_blogs.dart';
+import '../../domain/useCases/get_blog_by_id.dart';
 import '../../domain/useCases/toggle_like_blog.dart';
 import '../../domain/useCases/update_blog.dart';
 import '../../domain/useCases/upload_blog.dart';
+import '../../domain/useCases/watch_new_blogs.dart';
 part 'blog_event.dart';
 part 'blog_state.dart';
 
@@ -16,6 +19,12 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
   final ToggleLikeBlog toggleLikeBlog;
   final UpdateBlog updateBlog;
   final DeleteBlog deleteBlog;
+  final GetBlogById getBlogById;
+  final WatchNewBlogs watchNewBlogs;
+
+  /// Realtime subscription for blogs other users post; restarted on every
+  /// BlogWatchNewBlogs so a logout -> login doesn't leave two running
+  StreamSubscription<String>? _newBlogsSubscription;
 
   static const int pageLimit = 10;
   int _page = 0;
@@ -26,6 +35,8 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
     required this.toggleLikeBlog,
     required this.updateBlog,
     required this.deleteBlog,
+    required this.getBlogById,
+    required this.watchNewBlogs,
   }) : super(BlogInitial()) {
     on<BlogUpload>(_onBlogUpload);
     on<BlogFetchAllBlogs>(_onFetchAllBlogs);
@@ -33,6 +44,14 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
     on<BlogToggleLike>(_onToggleLike);
     on<BlogUpdate>(_onBlogUpdate);
     on<BlogDelete>(_onBlogDelete);
+    on<BlogWatchNewBlogs>(_onWatchNewBlogs);
+    on<BlogNewBlogPosted>(_onNewBlogPosted);
+  }
+
+  @override
+  Future<void> close() async {
+    await _newBlogsSubscription?.cancel();
+    return super.close();
   }
 
   void _onBlogUpload(BlogUpload event, Emitter<BlogState> emit) async {
@@ -82,8 +101,11 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
           (l) => emit(BlogFailure(l.message)),
           (r) {
             _page = nextPage;
+            /// blogs prepended live (BlogNewBlogPosted) shift the server-side
+            /// offsets, so the next page can repeat one we already have
+            final knownIds = current.blogs.map((blog) => blog.id).toSet();
             emit(BlogDisplaySuccess(
-              [...current.blogs, ...r],
+              [...current.blogs, ...r.where((blog) => !knownIds.contains(blog.id))],
               hasReachedMax: r.length < pageLimit,
             ));
           },
@@ -133,6 +155,35 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
     res.fold(
           (l) => emit(BlogFailure(l.message)),
           (_) => emit(BlogDeleteSuccess()),
+    );
+  }
+
+  Future<void> _onWatchNewBlogs(BlogWatchNewBlogs event, Emitter<BlogState> emit) async {
+    await _newBlogsSubscription?.cancel();
+    _newBlogsSubscription = watchNewBlogs().listen(
+      (blogId) => add(BlogNewBlogPosted(blogId: blogId)),
+    );
+  }
+
+  /// adds a blog someone just posted to the top of the feed, so the home
+  /// page refreshes itself without a pull-to-refresh
+  void _onNewBlogPosted(BlogNewBlogPosted event, Emitter<BlogState> emit) async {
+    if (state is! BlogDisplaySuccess) return;
+    final res = await getBlogById(event.blogId);
+
+    /// re-read the state - it may have changed while the blog was loading
+    final current = state;
+    if (current is! BlogDisplaySuccess) return;
+    res.fold(
+          (_) {},
+          (blog) {
+            if (current.blogs.any((b) => b.id == blog.id)) return;
+            emit(BlogDisplaySuccess(
+              [blog, ...current.blogs],
+              hasReachedMax: current.hasReachedMax,
+              isLoadingMore: current.isLoadingMore,
+            ));
+          },
     );
   }
 }

@@ -160,4 +160,24 @@ class BlogRepositoryImpl implements BlogRepository{
     }
   }
 
+  @override
+  Future<Either<Failure, Blog>> getBlogById(String blogId) async {
+    try {
+      if(!await connectionChecker.isConnected){
+        return left(Failure(Constants.noConnectionMessage));
+      }
+      final blog = await blogRemoteDataSource.getBlogById(blogId);
+      if (blog == null) {
+        return left(Failure('This blog is no longer available.'));
+      }
+      return right(blog);
+    } on ServerException catch (e) {
+      return left(Failure(e.message));
+    } catch (e) {
+      return left(Failure(e.toString()));
+    }
+  }
+
+  @override
+  Stream<String> watchNewBlogIds() => blogRemoteDataSource.watchNewBlogIds();
 }

@@ -54,3 +54,12 @@ final class BlogDelete extends BlogEvent {
 
   BlogDelete({required this.blogId});
 }
+
+/// starts listening (over Supabase Realtime) for blogs other users post
+final class BlogWatchNewBlogs extends BlogEvent {}
+
+final class BlogNewBlogPosted extends BlogEvent {
+  final String blogId;
+
+  BlogNewBlogPosted({required this.blogId});
+}

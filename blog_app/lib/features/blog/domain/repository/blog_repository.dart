@@ -39,4 +39,10 @@ abstract interface class BlogRepository{
   /// Deletes a blog the current user posted.
   Future<Either<Failure, void>> deleteBlog(String blogId);
 
+  /// A single blog (with author and likes), e.g. one announced in a notification.
+  Future<Either<Failure, Blog>> getBlogById(String blogId);
+
+  /// Ids of blogs other users post from now on, pushed live over Realtime.
+  Stream<String> watchNewBlogIds();
+
 }

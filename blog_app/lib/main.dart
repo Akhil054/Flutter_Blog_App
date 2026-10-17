@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:blog_app/core/common/cubits/app_user/app_user_cubit.dart';
 import 'package:blog_app/core/common/cubits/theme/theme_cubit.dart';
 import 'package:blog_app/core/services/notification_service.dart';
 import 'package:blog_app/features/ai/presentation/cubit/ai_assist_cubit.dart';
 import 'package:blog_app/features/blog/presentation/bloc/blog_bloc.dart';
+import 'package:blog_app/features/notifications/presentation/cubit/notification_cubit.dart';
+import 'package:blog_app/features/notifications/presentation/open_notification_blog.dart';
 import 'package:blog_app/init_depdencies.dart';
 import 'package:blog_app/theme/theme.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -51,6 +55,9 @@ void main() async {
           create: (_) => serviceLocator<AiAssistCubit>(),
         ),
         BlocProvider(
+          create: (_) => serviceLocator<NotificationCubit>(),
+        ),
+        BlocProvider(
           create: (_) => ThemeCubit(savedThemeMode),
         ),
       ],
@@ -69,10 +76,47 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   // This widget is the root of your application.
 
+  /// lets a tapped push notification open a blog from outside the widget tree
+  final _navigatorKey = GlobalKey<NavigatorState>();
+  StreamSubscription<String>? _blogTapSubscription;
+
   @override
   void initState() {
     super.initState();
     context.read<AuthBloc>().add(AuthIsUserLoggedIn());
+    _blogTapSubscription = NotificationService.onBlogTap.listen(_openBlog);
+  }
+
+  @override
+  void dispose() {
+    _blogTapSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _openBlog(String blogId) {
+    final navigatorContext = _navigatorKey.currentContext;
+    if (navigatorContext == null ||
+        context.read<AppUserCubit>().state is! AppUserLoggedIn) {
+      return;
+    }
+    openNotificationBlog(navigatorContext, blogId);
+  }
+
+  /// start notifications (Realtime + push token) once someone is logged in,
+  /// and open the blog if the app was launched by tapping a push
+  Future<void> _onAppUserChanged(BuildContext context, AppUserState state) async {
+    final notificationCubit = context.read<NotificationCubit>();
+    if (state is AppUserLoggedIn) {
+      await notificationCubit.start();
+      final initialBlogId = await NotificationService.takeInitialBlogId();
+      if (initialBlogId != null) {
+        /// wait for the home page to be built before pushing on top of it
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _openBlog(initialBlogId));
+      }
+    } else {
+      await notificationCubit.stop();
+    }
   }
 
   @override
@@ -80,22 +124,28 @@ class _MyAppState extends State<MyApp> {
     return BlocBuilder<ThemeCubit, ThemeMode>(
       builder: (context, themeMode) {
         return MaterialApp(
+          navigatorKey: _navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'Blog App',
           theme: AppTheme.lightThemeMode,
           darkTheme: AppTheme.darkThemeMode,
           themeMode: themeMode,
-          home: BlocSelector<AppUserCubit, AppUserState, bool>(
-            selector: (state) {
-              return state is AppUserLoggedIn;
-            },
-            builder: (context, isLoggedIn) {
-              if (isLoggedIn) {
-                return const BlogPage();
-              }
+          home: BlocListener<AppUserCubit, AppUserState>(
+            listenWhen: (previous, current) =>
+                (previous is AppUserLoggedIn) != (current is AppUserLoggedIn),
+            listener: _onAppUserChanged,
+            child: BlocSelector<AppUserCubit, AppUserState, bool>(
+              selector: (state) {
+                return state is AppUserLoggedIn;
+              },
+              builder: (context, isLoggedIn) {
+                if (isLoggedIn) {
+                  return const BlogPage();
+                }
 
-              return const LoginPage();
-            },
+                return const LoginPage();
+              },
+            ),
           ),
         );
       },

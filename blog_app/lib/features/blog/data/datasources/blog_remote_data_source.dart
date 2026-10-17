@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:developer' as developer;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -33,6 +34,14 @@ abstract interface class BlogRemoteDataSource{
   });
 
   Future<void> deleteBlog(String blogId);
+
+  /// A single blog with its author and likes filled in, or null if it no
+  /// longer exists. Used for blogs announced over Realtime / notifications.
+  Future<BlogModel?> getBlogById(String blogId);
+
+  /// Emits the id of every blog another user posts from now on, via
+  /// Supabase Realtime. Cancelling the subscription closes the channel.
+  Stream<String> watchNewBlogIds();
 
 }
 
@@ -121,29 +130,76 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
       final blogModels = blogs.map((blog) => BlogModel.fromJson(blog)).toList();
       if (blogModels.isEmpty) return blogModels;
 
-      /// fetching the poster's name for each unique posterId so the UI can
-      /// show "who wrote this" without a DB-level foreign key join
-      final posterIds = blogModels.map((blog) => blog.posterId).toSet().toList();
-      final users = await supabaseClient
-          .from('profiles')
-          .select('id, name')
-          .inFilter('id', posterIds);
-
-      final nameByPosterId = {
-        for (final user in users)
-          if (user['id'] != null) user['id'] as String: (user['name'] as String?) ?? 'Anonymous',
-      };
-
-      final withLikes = await _attachLikes(blogModels);
-
-      return withLikes
-          .map((blog) => blog.copyWith(
-                author: nameByPosterId[blog.posterId] ?? 'Anonymous',
-              ))
-          .toList();
+      return _attachLikes(await _attachAuthors(blogModels));
     } catch (e) {
       throw Exception(e.toString());
     }
+  }
+
+  @override
+  Future<BlogModel?> getBlogById(String blogId) async {
+    try {
+      final row = await supabaseClient
+          .from('blogs')
+          .select()
+          .eq('id', blogId)
+          .maybeSingle();
+      if (row == null) return null;
+
+      final withDetails =
+          await _attachLikes(await _attachAuthors([BlogModel.fromJson(row)]));
+      return withDetails.first;
+    } catch (e) {
+      throw Exception(e.toString());
+    }
+  }
+
+  @override
+  Stream<String> watchNewBlogIds() {
+    final currentUserId = supabaseClient.auth.currentUser?.id;
+    final controller = StreamController<String>();
+
+    final channel = supabaseClient
+        .channel('blogs-inserts-${DateTime.now().millisecondsSinceEpoch}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'blogs',
+          callback: (payload) {
+            final blogId = payload.newRecord['id'] as String?;
+            /// your own posts live on the profile page, not the feed
+            if (blogId == null ||
+                payload.newRecord['poster_id'] == currentUserId) {
+              return;
+            }
+            controller.add(blogId);
+          },
+        )
+        .subscribe();
+
+    controller.onCancel = () => supabaseClient.removeChannel(channel);
+    return controller.stream;
+  }
+
+  /// fetches the poster's name for each unique posterId so the UI can
+  /// show "who wrote this" without a DB-level foreign key join
+  Future<List<BlogModel>> _attachAuthors(List<BlogModel> blogModels) async {
+    final posterIds = blogModels.map((blog) => blog.posterId).toSet().toList();
+    final users = await supabaseClient
+        .from('profiles')
+        .select('id, name')
+        .inFilter('id', posterIds);
+
+    final nameByPosterId = {
+      for (final user in users)
+        if (user['id'] != null) user['id'] as String: (user['name'] as String?) ?? 'Anonymous',
+    };
+
+    return blogModels
+        .map((blog) => blog.copyWith(
+              author: nameByPosterId[blog.posterId] ?? 'Anonymous',
+            ))
+        .toList();
   }
 
   @override

@@ -8,6 +8,7 @@ import '../../../../init_depdencies.dart';
 import '../../../../theme/pallete.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../blog/presentation/widgets/blog_summary_tile.dart';
+import '../../../notifications/presentation/cubit/notification_cubit.dart';
 import '../cubit/profile_cubit.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -109,7 +110,11 @@ class ProfilePage extends StatelessWidget {
                       side: const BorderSide(color: AppPalette.errorColor),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    onPressed: () {
+                    onPressed: () async {
+                      /// remove this device's push token while still signed
+                      /// in, so the next user here doesn't get our pushes
+                      await context.read<NotificationCubit>().stop();
+                      if (!context.mounted) return;
                       context.read<AuthBloc>().add(AuthLogOut());
                     },
                     icon: const Icon(Icons.logout_outlined),

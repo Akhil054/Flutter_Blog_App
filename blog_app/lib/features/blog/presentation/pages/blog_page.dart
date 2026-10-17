@@ -6,6 +6,7 @@ import '../../../../core/common/Widgets/loader.dart';
 import '../../../../core/common/Widgets/show_snakbar.dart';
 import '../../../../core/common/cubits/theme/theme_cubit.dart';
 import '../../../../theme/pallete.dart';
+import '../../../notifications/presentation/widgets/notification_bell.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../domain/entites/blog.dart';
 import '../bloc/blog_bloc.dart';
@@ -39,6 +40,8 @@ class _BlogPageState extends State<BlogPage> {
     super.initState();
     /// fetch all blogs as soon as this page is shown
     context.read<BlogBloc>().add(BlogFetchAllBlogs());
+    /// and keep it fresh - blogs other users post appear at the top live
+    context.read<BlogBloc>().add(BlogWatchNewBlogs());
     _scrollController.addListener(_onScroll);
   }
 
@@ -95,6 +98,7 @@ class _BlogPageState extends State<BlogPage> {
             ),
             onPressed: () => context.read<ThemeCubit>().toggleTheme(),
           ),
+          const NotificationBell(),
           IconButton(
             onPressed: () {
               Navigator.push(context, ProfilePage.route());
