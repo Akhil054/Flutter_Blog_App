@@ -139,6 +139,9 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
   @override
   Future<BlogModel?> getBlogById(String blogId) async {
     try {
+      // #region debug-point feed-realtime:queries
+      final queryTimer = Stopwatch()..start();
+      // #endregion
       final row = await supabaseClient
           .from('blogs')
           .select()
@@ -148,6 +151,12 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
 
       final withDetails =
           await _attachLikes(await _attachAuthors([BlogModel.fromJson(row)]));
+      // #region debug-point feed-realtime:queries
+      developer.log(
+        '[TIMING] getBlogById queries (blog + author + likes): ${queryTimer.elapsedMilliseconds} ms',
+        name: 'feed-realtime',
+      );
+      // #endregion
       return withDetails.first;
     } catch (e) {
       throw Exception(e.toString());
@@ -172,6 +181,16 @@ class BlogRemoteDataSourceImpl implements BlogRemoteDataSource{
                 payload.newRecord['poster_id'] == currentUserId) {
               return;
             }
+            // #region debug-point feed-realtime:delivery
+            final deliveryMs = DateTime.now()
+                .toUtc()
+                .difference(payload.commitTimestamp.toUtc())
+                .inMilliseconds;
+            developer.log(
+              '[TIMING] realtime delivery (db commit -> phone): $deliveryMs ms  blogId=$blogId',
+              name: 'feed-realtime',
+            );
+            // #endregion
             controller.add(blogId);
           },
         )

@@ -1,13 +1,18 @@
 /// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 
-/// Called by a Database Webhook on INSERT into public.notifications.
-/// Looks up the recipient's FCM device tokens and sends each one a push via
-/// the FCM HTTP v1 API, so "X liked your blog" / "X posted a new blog"
-/// reach the user even when the app is in the background or closed.
+/// Called by the `on_notification_created` trigger (pg_net) on INSERT into
+/// public.notifications. Looks up the recipient's FCM device tokens and
+/// sends each one a push via the FCM HTTP v1 API, so "X liked your blog" /
+/// "X posted a new blog" reach the user even when the app is in the
+/// background or closed.
+///
+/// Deployed with --no-verify-jwt: the trigger authenticates with the
+/// x-webhook-secret header instead of a JWT.
 ///
 /// Secrets (supabase secrets set ...):
 ///   FIREBASE_SERVICE_ACCOUNT - the full service-account JSON downloaded from
 ///                              Firebase console > Project settings > Service accounts
+///   SEND_PUSH_SECRET         - same value as the `send_push_secret` Vault secret
 /// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
@@ -110,6 +115,11 @@ async function getAccessToken(): Promise<string> {
 
 /// cr edge func for fcm push & in background & close 
 Deno.serve(async (req) => {
+  const webhookSecret = Deno.env.get("SEND_PUSH_SECRET");
+  if (!webhookSecret || req.headers.get("x-webhook-secret") !== webhookSecret) {
+    return jsonResponse({ error: "unauthorized" }, 401);
+  }
+
   try {
     const payload: WebhookPayload = await req.json();
     if (payload.type !== "INSERT" || !payload.record?.id) {

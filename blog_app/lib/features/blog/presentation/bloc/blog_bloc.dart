@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:meta/meta.dart';
@@ -169,6 +170,9 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
   /// page refreshes itself without a pull-to-refresh
   void _onNewBlogPosted(BlogNewBlogPosted event, Emitter<BlogState> emit) async {
     if (state is! BlogDisplaySuccess) return;
+    // #region debug-point feed-realtime:total
+    final fetchTimer = Stopwatch()..start();
+    // #endregion
     final res = await getBlogById(event.blogId);
 
     /// re-read the state - it may have changed while the blog was loading
@@ -183,6 +187,12 @@ class BlogBloc extends Bloc<BlogEvent, BlogState> {
               hasReachedMax: current.hasReachedMax,
               isLoadingMore: current.isLoadingMore,
             ));
+            // #region debug-point feed-realtime:total
+            developer.log(
+              '[TIMING] received -> on screen (connection check + queries): ${fetchTimer.elapsedMilliseconds} ms',
+              name: 'feed-realtime',
+            );
+            // #endregion
           },
     );
   }
